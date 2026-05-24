@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Daily Briefing — {{ b.for_date | date_short }}</title>
+<style>
+  @page {
+    size: Letter;
+    margin: 0.55in 0.6in 0.45in 0.6in;
+  }
+  html, body { font-family: "Bitstream Charter", "Charter", "Georgia", serif; color: #111; }
+  body { font-size: 10.5pt; line-height: 1.35; margin: 0; }
+
+  .masthead {
+    text-align: center;
+    border-top: 2pt solid #111;
+    border-bottom: 0.5pt solid #111;
+    padding: 6pt 0 4pt 0;
+    margin-bottom: 2pt;
+  }
+  .masthead .title {
+    font-size: 22pt;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .masthead .subline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8.5pt;
+    font-style: italic;
+    margin-top: 3pt;
+    padding-top: 3pt;
+    border-top: 0.5pt solid #111;
+  }
+  .masthead .vol { letter-spacing: 0.05em; }
+  .masthead .date { font-weight: 700; font-style: normal; letter-spacing: 0.05em; text-transform: uppercase; }
+  .masthead .city { letter-spacing: 0.05em; }
+
+  .greeting {
+    text-align: center;
+    font-style: italic;
+    font-size: 11pt;
+    margin: 10pt 0 4pt 0;
+  }
+
+  .weatherbar {
+    text-align: center;
+    font-size: 9.5pt;
+    border-top: 0.5pt solid #111;
+    border-bottom: 0.5pt solid #111;
+    padding: 4pt 0;
+    margin-bottom: 14pt;
+  }
+  .weatherbar .label { text-transform: uppercase; letter-spacing: 0.12em; font-size: 8pt; }
+  .weatherbar .summary { font-style: italic; }
+  .weatherbar .stats { font-weight: 700; }
+
+  .columns { column-count: 2; column-gap: 24pt; column-rule: 0.5pt solid #111; }
+
+  h2.section {
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    text-align: center;
+    margin: 0 0 6pt 0;
+    padding-bottom: 3pt;
+    border-bottom: 0.5pt solid #111;
+    break-after: avoid;
+  }
+
+  .agenda { break-inside: avoid; }
+  .agenda .event {
+    display: flex;
+    margin-bottom: 7pt;
+    break-inside: avoid;
+  }
+  .agenda .time {
+    flex: 0 0 78pt;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 9.5pt;
+    padding-top: 1pt;
+  }
+  .agenda .body {
+    flex: 1;
+    padding-left: 6pt;
+    border-left: 0.5pt solid #555;
+  }
+  .agenda .body .title { font-weight: 700; }
+  .agenda .body .loc { font-style: italic; font-size: 9pt; color: #444; }
+
+  .tasks { break-inside: avoid-column; }
+  .tasks ol { margin: 0; padding-left: 18pt; }
+  .tasks li {
+    margin-bottom: 6pt;
+    break-inside: avoid;
+    padding-left: 2pt;
+  }
+  .tasks .title { font-weight: 700; }
+  .tasks .meta { font-size: 8.5pt; font-style: italic; color: #444; }
+  .tasks .past-due { color: #8a0000; }
+  .tasks .past-due .title::after {
+    content: " ★";
+    font-style: normal;
+    color: #8a0000;
+  }
+
+  footer {
+    margin-top: 18pt;
+    padding-top: 4pt;
+    border-top: 0.5pt solid #111;
+    text-align: center;
+    font-size: 8pt;
+    font-style: italic;
+    color: #444;
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="title">The Daily Briefing</div>
+  <div class="subline">
+    <span class="vol">Vol. I &mdash; No. {{ b.for_date.toordinal() % 1000 }}</span>
+    <span class="date">{{ b.for_date | date_long }}</span>
+    <span class="city">{{ b.weather.location }}</span>
+  </div>
+</div>
+
+<div class="greeting">{{ b.greeting }}.</div>
+
+<div class="weatherbar">
+  <span class="stats">{{ b.weather.current_f }}° now</span> &nbsp;·&nbsp;
+  High <span class="stats">{{ b.weather.high_f }}°</span>, low <span class="stats">{{ b.weather.low_f }}°</span> &nbsp;·&nbsp;
+  Precip <span class="stats">{{ b.weather.precip_chance_today }}%</span> &nbsp;·&nbsp;
+  Sun <span class="stats">{{ b.weather.sunrise }} – {{ b.weather.sunset }}</span><br>
+  <span class="summary">{{ b.weather.summary }}.</span>
+</div>
+
+<div class="columns">
+
+  <section class="agenda">
+    <h2 class="section">Today&rsquo;s Agenda</h2>
+    {% for e in b.events %}
+    <div class="event">
+      <div class="time">{{ e.time_range }}</div>
+      <div class="body">
+        <div class="title">{{ e.title }}</div>
+        {% if e.location %}<div class="loc">{{ e.location }}</div>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+
+  <section class="tasks">
+    <h2 class="section">Priorities</h2>
+    <ol>
+      {% for t in b.tasks %}
+      <li class="{% if t.is_past_due %}past-due{% endif %}">
+        <span class="title">{{ t.title }}</span><br>
+        <span class="meta">
+          {{ t.priority.value }}{% if t.project %} &middot; {{ t.project }}{% endif %}{% if t.due %} &middot; due {{ t.due | due }}{% if t.is_past_due %} (past due){% endif %}{% endif %}
+        </span>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+
+</div>
+
+<footer>
+  Printed {{ b.for_date | date_long }} &middot; Tap the tag tomorrow for tomorrow&rsquo;s edition.
+</footer>
+
+</body>
+</html>

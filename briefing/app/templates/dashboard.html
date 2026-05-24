@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Daily Briefing — {{ b.for_date | date_short }}</title>
+<style>
+  @page {
+    size: Letter;
+    margin: 0.4in 0.45in 0.4in 0.45in;
+  }
+  html, body {
+    font-family: "DejaVu Sans", "Liberation Sans", "Helvetica", sans-serif;
+    color: #1a1a1a;
+  }
+  body { font-size: 9pt; line-height: 1.3; margin: 0; }
+
+  /* ===== Top KPI strip ===== */
+  .kpi {
+    display: flex;
+    border: 1pt solid #1a1a1a;
+    margin-bottom: 8pt;
+  }
+  .kpi .cell {
+    flex: 1;
+    padding: 6pt 8pt;
+    border-right: 0.5pt solid #1a1a1a;
+  }
+  .kpi .cell:last-child { border-right: 0; }
+  .kpi .cell.date { flex: 1.8; background: #1a1a1a; color: #fff; }
+  .kpi .label {
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #888;
+    margin-bottom: 2pt;
+  }
+  .kpi .cell.date .label { color: #aaa; }
+  .kpi .value {
+    font-size: 13pt;
+    font-weight: 700;
+    line-height: 1.05;
+  }
+  .kpi .cell.date .value { font-size: 14pt; }
+  .kpi .sub { font-size: 7.5pt; color: #555; margin-top: 1pt; }
+  .kpi .cell.date .sub { color: #ccc; }
+
+  /* ===== Main grid ===== */
+  .grid {
+    display: flex;
+    gap: 10pt;
+  }
+  .col-left { flex: 1.15; }
+  .col-right { flex: 1; }
+
+  h2.section {
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #555;
+    margin: 0 0 5pt 0;
+    padding-bottom: 3pt;
+    border-bottom: 1.5pt solid #1a1a1a;
+  }
+
+  /* ===== Timeline ===== */
+  .timeline { position: relative; height: 380pt; }
+  .timeline .hour {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 0.4pt solid #e5e5e5;
+    font-size: 7pt;
+    color: #999;
+  }
+  .timeline .hour.major { border-top: 0.5pt solid #888; }
+  .timeline .hour .label {
+    position: absolute;
+    left: 0;
+    top: -4pt;
+    width: 24pt;
+    text-align: right;
+    color: #999;
+    font-size: 7pt;
+  }
+  .timeline .events {
+    position: absolute;
+    left: 30pt;
+    right: 0;
+    top: 0;
+    bottom: 0;
+  }
+  .timeline .event {
+    position: absolute;
+    left: 4pt;
+    right: 4pt;
+    background: #eef2ff;
+    border-left: 2.5pt solid #2b4eff;
+    padding: 3pt 5pt;
+    font-size: 8pt;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+  .timeline .event .t { font-weight: 700; line-height: 1.15; }
+  .timeline .event .meta { color: #555; font-size: 7pt; line-height: 1.2; margin-top: 1pt; }
+
+  /* ===== Tasks ===== */
+  .task {
+    display: flex;
+    align-items: flex-start;
+    padding: 4pt 0;
+    border-bottom: 0.4pt solid #e5e5e5;
+    break-inside: avoid;
+  }
+  .task .dot {
+    flex: 0 0 7pt;
+    width: 7pt; height: 7pt;
+    border-radius: 50%;
+    margin: 4pt 7pt 0 0;
+    background: #ccc;
+  }
+  .task.p-ultra-high .dot { background: #d11515; }
+  .task.p-high      .dot { background: #ee7c1a; }
+  .task.p-medium    .dot { background: #2b4eff; }
+  .task.p-low       .dot { background: #888; }
+  .task .rank {
+    flex: 0 0 16pt;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: #999;
+    font-size: 9pt;
+    padding-top: 1pt;
+  }
+  .task .body { flex: 1; }
+  .task .title { font-weight: 600; font-size: 9pt; }
+  .task .meta {
+    font-size: 7.5pt;
+    color: #666;
+    margin-top: 1pt;
+  }
+  .task.past-due .title { color: #d11515; }
+  .task.past-due .meta { color: #d11515; }
+  .pill {
+    display: inline-block;
+    padding: 0 4pt;
+    border-radius: 6pt;
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: #1a1a1a;
+    color: #fff;
+    margin-right: 4pt;
+    vertical-align: 1pt;
+  }
+
+  /* ===== Hourly weather strip ===== */
+  .hourly {
+    display: flex;
+    margin-top: 6pt;
+    border: 0.5pt solid #1a1a1a;
+  }
+  .hourly .h {
+    flex: 1;
+    border-right: 0.4pt solid #ccc;
+    padding: 4pt 0;
+    text-align: center;
+  }
+  .hourly .h:last-child { border-right: 0; }
+  .hourly .hr { font-size: 7pt; color: #888; }
+  .hourly .tp { font-size: 11pt; font-weight: 700; }
+  .hourly .pc { font-size: 7pt; color: #2b4eff; }
+
+  footer {
+    margin-top: 6pt;
+    font-size: 6.5pt;
+    color: #888;
+    text-align: right;
+  }
+</style>
+</head>
+<body>
+
+<div class="kpi">
+  <div class="cell date">
+    <div class="label">Today</div>
+    <div class="value">{{ b.for_date.strftime("%a %b %-d") }}</div>
+    <div class="sub">{{ b.greeting }}</div>
+  </div>
+  <div class="cell">
+    <div class="label">Now</div>
+    <div class="value">{{ b.weather.current_f }}°</div>
+    <div class="sub">{{ b.weather.location }}</div>
+  </div>
+  <div class="cell">
+    <div class="label">Today</div>
+    <div class="value">{{ b.weather.high_f }}° / {{ b.weather.low_f }}°</div>
+    <div class="sub">high / low</div>
+  </div>
+  <div class="cell">
+    <div class="label">Precip</div>
+    <div class="value">{{ b.weather.precip_chance_today }}%</div>
+    <div class="sub">{{ b.weather.summary[:36] }}</div>
+  </div>
+  <div class="cell">
+    <div class="label">Sun</div>
+    <div class="value" style="font-size:10pt;">{{ b.weather.sunrise }}<br>{{ b.weather.sunset }}</div>
+    <div class="sub">rise / set</div>
+  </div>
+</div>
+
+<div class="grid">
+
+  <div class="col-left">
+    <h2 class="section">Schedule</h2>
+    <div class="timeline">
+      {# 14 hour rows from 6am to 8pm; each row is 100/14 = 7.143% of height #}
+      {% for h in range(6, 20) %}
+        {% set top_pct = ((h - 6) / 14.0) * 100 %}
+      <div class="hour {% if (h % 3) == 0 %}major{% endif %}" style="top: {{ top_pct }}%;">
+        <span class="label">{{ ((h-1) % 12) + 1 }}{% if h < 12 %}a{% else %}p{% endif %}</span>
+      </div>
+      {% endfor %}
+      <div class="events">
+        {% for e in b.events %}
+          {% if e.start and e.end and not e.all_day %}
+            {% set start_h = e.start.hour + e.start.minute/60.0 %}
+            {% set end_h = e.end.hour + e.end.minute/60.0 %}
+            {% if start_h < 20 and end_h > 6 %}
+              {% set top_pct = ((start_h - 6) / 14.0) * 100 %}
+              {% set height_pct = ((end_h - start_h) / 14.0) * 100 %}
+        <div class="event" style="top: {{ top_pct }}%; height: {{ height_pct }}%;">
+          <div class="t">{{ e.title }}</div>
+          <div class="meta">{{ e.time_range }}{% if e.location %} · {{ e.location }}{% endif %}</div>
+        </div>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-right">
+    <h2 class="section">Top 10 Priorities</h2>
+    {% for t in b.tasks %}
+      {% set cls = t.priority.value.lower().replace(' ', '-') %}
+    <div class="task p-{{ cls }} {% if t.is_past_due %}past-due{% endif %}">
+      <div class="rank">{{ loop.index }}</div>
+      <div class="dot"></div>
+      <div class="body">
+        <div class="title">{{ t.title }}</div>
+        <div class="meta">
+          {% if t.is_past_due %}<span class="pill" style="background:#d11515;">Past due</span>{% endif %}
+          {{ t.priority.value }}{% if t.project %} · {{ t.project }}{% endif %}{% if t.due %} · {{ t.due | due }}{% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<h2 class="section" style="margin-top:8pt;">Hourly Forecast</h2>
+<div class="hourly">
+  {% for h in b.weather.hourly %}
+  <div class="h">
+    <div class="hr">{{ ((h.hour-1)%12)+1 }}{% if h.hour<12 %}a{% else %}p{% endif %}</div>
+    <div class="tp">{{ h.temp_f }}°</div>
+    <div class="pc">{{ h.precip_chance }}%</div>
+  </div>
+  {% endfor %}
+</div>
+
+<footer>Daily Briefing · {{ b.for_date | date_long }}</footer>
+
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Daily Briefing — {{ b.for_date | date_short }}</title>
+<style>
+  @page {
+    size: Letter;
+    margin: 0.55in 0.85in 0.5in 0.85in;
+  }
+  html, body {
+    font-family: "DejaVu Sans", "Liberation Sans", "Helvetica", sans-serif;
+    color: #222;
+  }
+  body { font-size: 10pt; line-height: 1.45; margin: 0; }
+
+  .date {
+    font-size: 22pt;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    color: #111;
+    margin: 0 0 1pt 0;
+  }
+  .greeting {
+    font-size: 11pt;
+    font-weight: 300;
+    color: #777;
+    margin: 0 0 14pt 0;
+  }
+
+  .weather-line {
+    font-size: 10.5pt;
+    color: #333;
+    padding: 9pt 0;
+    border-top: 0.5pt solid #d0d0d0;
+    border-bottom: 0.5pt solid #d0d0d0;
+    margin-bottom: 18pt;
+  }
+  .weather-line strong { font-weight: 600; color: #111; }
+
+  h2 {
+    font-size: 8.5pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: #999;
+    margin: 0 0 8pt 0;
+  }
+
+  section { margin-bottom: 16pt; }
+
+  .agenda .event {
+    display: flex;
+    align-items: baseline;
+    padding: 4pt 0;
+    border-bottom: 0.25pt solid #eee;
+  }
+  .agenda .event:last-child { border-bottom: 0; }
+  .agenda .time {
+    flex: 0 0 95pt;
+    font-size: 9.5pt;
+    color: #888;
+    font-variant-numeric: tabular-nums;
+  }
+  .agenda .title {
+    flex: 1;
+    font-size: 10.5pt;
+    color: #111;
+  }
+  .agenda .loc {
+    font-size: 9pt;
+    color: #999;
+    margin-left: 8pt;
+  }
+
+  .tasks ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: task;
+  }
+  .tasks li {
+    counter-increment: task;
+    display: flex;
+    align-items: baseline;
+    padding: 3.5pt 0;
+    border-bottom: 0.25pt solid #eee;
+  }
+  .tasks li:last-child { border-bottom: 0; }
+  .tasks li::before {
+    content: counter(task, decimal-leading-zero);
+    flex: 0 0 28pt;
+    font-size: 8.5pt;
+    font-variant-numeric: tabular-nums;
+    color: #bbb;
+    letter-spacing: 0.04em;
+  }
+  .tasks .title {
+    flex: 1;
+    font-size: 10pt;
+    color: #111;
+  }
+  .tasks .meta {
+    font-size: 8.5pt;
+    color: #999;
+    margin-left: 8pt;
+    white-space: nowrap;
+  }
+  .tasks li.past-due .title { color: #b03030; }
+  .tasks li.past-due .meta { color: #b03030; }
+
+  footer {
+    margin-top: 24pt;
+    font-size: 8.5pt;
+    color: #bbb;
+    text-align: center;
+    letter-spacing: 0.08em;
+  }
+</style>
+</head>
+<body>
+
+<div class="date">{{ b.for_date.strftime("%A, %B %-d") }}</div>
+<div class="greeting">{{ b.greeting }}.</div>
+
+<div class="weather-line">
+  <strong>{{ b.weather.current_f }}°</strong> in {{ b.weather.location }} &nbsp;·&nbsp;
+  High <strong>{{ b.weather.high_f }}°</strong>, low <strong>{{ b.weather.low_f }}°</strong> &nbsp;·&nbsp;
+  {{ b.weather.summary }}.
+</div>
+
+<section class="agenda">
+  <h2>Today</h2>
+  {% for e in b.events %}
+  <div class="event">
+    <div class="time">{{ e.time_range }}</div>
+    <div class="title">
+      {{ e.title }}{% if e.location %}<span class="loc">{{ e.location }}</span>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</section>
+
+<section class="tasks">
+  <h2>Top 10</h2>
+  <ol>
+    {% for t in b.tasks %}
+    <li class="{% if t.is_past_due %}past-due{% endif %}">
+      <span class="title">{{ t.title }}</span>
+      <span class="meta">{% if t.is_past_due %}past due {{ t.due | due }}{% elif t.due %}{{ t.due | due }}{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+
+<footer>{{ b.weather.sunrise }} &middot; {{ b.weather.sunset }}</footer>
+
+</body>
+</html>
