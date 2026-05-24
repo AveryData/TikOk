@@ -8,24 +8,19 @@ Usage:
     pip install httpx beautifulsoup4 lxml
     python scripts/scrape_come_follow_me.py
 
-The manual's TOC links each weekly lesson page. Each lesson page header
-has the date range and scripture reference. We extract:
-    - week.start, week.end (Mon-Sun)
-    - week.reference  (e.g. "Genesis 12-17; Abraham 1-2")
-    - week.theme      (lesson title)
-    - week.url        (canonical URL of that week's lesson page)
-
-Daily readings, if you want them, can be added manually to each
-week.daily map (keyed by ISO date). The manual itself is organized
-weekly — daily breakdowns come from third-party reading plans, not the
-official manual.
+The TOC page has 68 anchor tags into the manual. Weekly lessons use
+short numeric URLs like /26 or /27. Intros (/001-conversion) and
+appendices (/54-appendix-b) have a -slug suffix, so the regex below
+ignores them. Each weekly link's text is already in the form:
+    "June 22–28 2 Samuel 11–12; 1 Kings 3; 6–9; 11"
+…which is all we need to write the JSON — no per-lesson fetch required.
 """
 from __future__ import annotations
 
 import json
 import re
 import sys
-from datetime import date, datetime, timedelta
+from datetime import date
 from pathlib import Path
 
 try:
@@ -51,16 +46,24 @@ UA = {
     "Accept-Language": "en-US,en;q=0.9",
 }
 
-# Examples that should match:
-#   "December 29-January 4. Genesis 1-2; Moses 2-3"
-#   "January 5-11. Genesis 3-4; Moses 4-5"
+# Weekly lesson URL: /old-testament-2026/<digits>(?lang=eng)?
+# Excludes intros like /001-conversion and appendices like /54-appendix-b
+LESSON_URL_RE = re.compile(
+    r"/study/manual/come-follow-me-for-home-and-church-old-testament-2026/(\d{1,2})(?:\?|$)"
+)
+
+# Examples to match:
+#   "December 29–January 4 Genesis 1–2; Moses 2–3"
+#   "June 22–28 2 Samuel 11–12; 1 Kings 3; 6–9; 11"
+#   "June 29–July 5 1 Kings 12–13; 17–22"
+# Dash characters seen: en-dash "–" (U+2013), em-dash "—" (U+2014), hyphen "-".
 DATE_REF_RE = re.compile(
-    r"^\s*(?P<start_month>[A-Z][a-z]+)\s+(?P<start_day>\d{1,2})"
-    r"\s*[–-]\s*"
+    r"^\s*"
+    r"(?P<start_month>[A-Z][a-z]+)\s+(?P<start_day>\d{1,2})"
+    r"\s*[–—-]\s*"
     r"(?:(?P<end_month>[A-Z][a-z]+)\s+)?(?P<end_day>\d{1,2})"
-    r"\s*[.·:]\s*"
-    r"(?P<ref>.+?)\s*$",
-    re.DOTALL,
+    r"\s+"
+    r"(?P<ref>.+?)\s*$"
 )
 
 MONTHS = {
@@ -72,87 +75,89 @@ MONTHS = {
 }
 
 
-def _parse_week_label(label: str, year_hint: int = 2026) -> tuple[date, date, str] | None:
-    """Parse 'December 29-January 4. Genesis 1-2; Moses 2-3' → (start, end, ref)."""
-    m = DATE_REF_RE.match(label)
+def _parse_week_text(text: str, year_hint: int = 2026) -> tuple[date, date, str] | None:
+    m = DATE_REF_RE.match(text)
     if not m:
         return None
-    start_month = MONTHS[m.group("start_month")]
-    start_day = int(m.group("start_day"))
+    start_month = MONTHS.get(m.group("start_month"))
     end_month_name = m.group("end_month") or m.group("start_month")
-    end_month = MONTHS[end_month_name]
+    end_month = MONTHS.get(end_month_name)
+    if start_month is None or end_month is None:
+        return None
+    start_day = int(m.group("start_day"))
     end_day = int(m.group("end_day"))
 
-    # Year inference: if start_month=12 and end_month=1, the start is the
-    # prior year. (The 2026 OT manual's intro week is Dec 29 2025 - Jan 4 2026.)
+    # The 2026 OT manual's intro week is Dec 29 2025 → Jan 4 2026.
     start_year = year_hint - 1 if start_month == 12 and end_month == 1 else year_hint
     end_year = year_hint
-
-    return (
-        date(start_year, start_month, start_day),
-        date(end_year, end_month, end_day),
-        m.group("ref").strip(),
-    )
+    try:
+        return (
+            date(start_year, start_month, start_day),
+            date(end_year, end_month, end_day),
+            m.group("ref").strip(),
+        )
+    except ValueError:
+        return None
 
 
 def main() -> None:
+    print(f"Fetching {TOC_URL}")
     with httpx.Client(headers=UA, timeout=30, follow_redirects=True) as client:
-        print(f"Fetching {TOC_URL}")
-        toc_html = client.get(TOC_URL).raise_for_status().text
+        resp = client.get(TOC_URL)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, "lxml")
 
-        soup = BeautifulSoup(toc_html, "lxml")
-        weeks: list[dict] = []
+    weeks: list[dict] = []
+    seen_hrefs: set[str] = set()
+    skipped_non_weekly = 0
+    skipped_unparseable = 0
 
-        # Each weekly lesson is linked in the TOC. The Church site renders
-        # the TOC as a list of anchors; lesson hrefs match the manual path.
-        seen = set()
-        for a in soup.select("a[href*='/study/manual/come-follow-me-for-home-and-church-old-testament-2026/']"):
-            href = a["href"].split("?")[0]
-            if href in seen:
-                continue
-            seen.add(href)
+    for a in soup.find_all("a", href=True):
+        href = a["href"].split("?")[0]
+        if href in seen_hrefs:
+            continue
+        seen_hrefs.add(href)
 
-            text = " ".join(a.get_text(" ", strip=True).split())
-            parsed = _parse_week_label(text)
-            if not parsed:
-                continue
-            start, end, reference = parsed
+        m = LESSON_URL_RE.search(a["href"])
+        if not m:
+            skipped_non_weekly += 1
+            continue
 
-            # Fetch lesson page to get the lesson title/theme.
-            lesson_url = href if href.startswith("http") else BASE + href
-            print(f"  · {start} → {reference[:60]}")
-            theme = None
-            try:
-                lesson_soup = BeautifulSoup(
-                    client.get(lesson_url).raise_for_status().text, "lxml"
-                )
-                # The lesson title is typically in <h1> with class title-related.
-                h1 = lesson_soup.find("h1")
-                if h1:
-                    theme = " ".join(h1.get_text(" ", strip=True).split())
-            except Exception as exc:
-                print(f"    (could not fetch lesson title: {exc})")
-
-            weeks.append({
-                "start": start.isoformat(),
-                "end": end.isoformat(),
-                "reference": reference,
-                "theme": theme,
-                "url": lesson_url,
-                "daily": {},
-            })
+        link_text = " ".join(a.get_text(" ", strip=True).split())
+        parsed = _parse_week_text(link_text)
+        if not parsed:
+            skipped_unparseable += 1
+            print(f"  [skip] {href}: could not parse text {link_text!r}")
+            continue
+        start, end, reference = parsed
+        url = href if href.startswith("http") else BASE + href + "?lang=eng"
+        print(f"  · {start} → {start.strftime('%b %-d')}–{end.strftime('%-d')}: {reference[:60]}")
+        weeks.append({
+            "start": start.isoformat(),
+            "end": end.isoformat(),
+            "reference": reference,
+            "theme": None,    # fetch per-lesson for the title quote if you want it
+            "url": url,
+            "daily": {},
+        })
 
     weeks.sort(key=lambda w: w["start"])
     out = {
         "_README": (
-            "Generated by scripts/scrape_come_follow_me.py from the official 2026 "
-            "OT manual TOC. To populate 'daily' readings, add entries to each week "
-            "(keyed by ISO date) sourced from your preferred reading plan."
+            "Generated by scripts/scrape_come_follow_me.py from the official 2026 OT "
+            "manual TOC. 'reference' is the scripture range for the week. 'theme' is "
+            "null by default; to populate it, re-run the scraper with --themes (TODO) "
+            "or add manually. 'daily' is an optional map keyed by ISO date if you "
+            "want per-day reading subsets."
         ),
         "weeks": weeks,
     }
     OUT_PATH.write_text(json.dumps(out, indent=2))
-    print(f"Wrote {len(weeks)} weeks to {OUT_PATH}")
+    print(
+        f"\nWrote {len(weeks)} weeks to {OUT_PATH}"
+        f"\n  (skipped {skipped_non_weekly} non-weekly links, "
+        f"{skipped_unparseable} weekly links with unrecognized text)"
+    )
 
 
 if __name__ == "__main__":
