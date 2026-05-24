@@ -1,57 +1,42 @@
-# Daily Briefing Printer
+# A Record of Our Day
 
-On-demand single-page briefing for an iPhone NFC tag. You tap the tag, your
-phone fetches a freshly-rendered PDF from a tiny cloud service, and the
-iOS Print action AirPrints it to the home printer. Nothing always-on at home.
+A single-page daily PDF rendered on demand by a tiny cloud service. Tap an
+NFC tag at home → iOS Shortcut fetches the PDF → phone AirPrints it to the
+home laser printer. **Zero always-on hardware at home.**
 
 ```
-[NFC tag] → [iOS Shortcut]
-              ├─ GET /briefing  → service renders PDF
-              └─ Print action   → iPhone AirPrints to LaserJet M201dw
+[NFC tag at home] → [iOS Shortcut]
+                       ├─ GET <cloud-run>/briefing?secret=…  → returns PDF
+                       └─ Print action                       → AirPrint to M201dw
 ```
 
 ## What's on the page
 
-- Today's date (long format)
-- Weather for Lindon, UT (current temp, high/low, precip chance, sunrise/sunset, conditions)
-- Today's Google Calendar events (primary calendar)
-- Top 10 most urgent tasks from the DCJ Notion task board:
-  1. Past-due first (oldest first)
-  2. Then due today
-  3. Then sorted by priority (Ultra High → High → Medium → Low) and due date
+Nine personas, one per day of the week (overridable via `?style=…`):
 
-Three style options ship in this repo. Pick one by setting `STYLE=<name>` or
-hitting `/briefing?style=<name>`:
+| Day | Persona | Vibe |
+|---|---|---|
+| Mon | `terminal` | $ ./record-of-our-day, ASCII bars, [OVERDUE] tags |
+| Tue | `spider-man` | The Daily Bugle, halftone, POW! badges |
+| Wed | `darwin` | Field Notes & Observations, Roman numerals, sepia |
+| Thu | `pokemon` | Trainer Card, Pokédex IDs, KO tags |
+| Fri | `stranger-things` | Hawkins Daily Bulletin, FROM THE UPSIDE DOWN |
+| Sat | `newspaper` | A Record of Our Day classic |
+| Sun | `scripture` | "And it came to pass…", verse markers |
 
-- `newspaper` — editorial serif, masthead, two-column layout
-- `dashboard` — data-dense sans, timeline visualization, colored priority dots
-- `minimalist` — light sans, generous whitespace, single-column flow
+Three older designs (`dashboard`, `minimalist`, `newspaper`) are still available.
 
-## Repo layout
-
-```
-briefing/
-  app/
-    main.py              FastAPI app (endpoints: /briefing, /preview/{style}, /healthz)
-    config.py            Settings via env vars / .env
-    models.py            Briefing, CalendarEvent, Task, Weather
-    sources/
-      calendar.py        Google Calendar fetcher (stub — needs OAuth wiring)
-      tasks.py           Notion task board fetcher (stub — needs token wiring)
-      weather.py         Open-Meteo fetcher (no auth needed)
-    render/
-      pdf.py             Jinja2 + WeasyPrint → PDF bytes
-      sample.py          Fake briefing data for previews
-    templates/
-      newspaper.html
-      dashboard.html
-      minimalist.html
-  scripts/
-    generate_samples.py  Render the three styles to samples/*.pdf
-  samples/               Committed sample PDFs for review
-  Dockerfile
-  requirements.txt
-```
+Each persona renders the same data:
+- Today's date + greeting + weather (Lindon, UT)
+- SPY price + 7d / 30d / YTD % change
+- Countdown(s) to upcoming events (e.g. Bear Lake Half Ironman)
+- Year-progress bar with month markers
+- Today's Google Calendar events (sample data until wired)
+- Top 10 Notion tasks (sample data until wired)
+- Upcoming 7 days
+- Come Follow Me reference (placeholder — see scraper script)
+- Prayer-writing box
+- Quote of the day + joke of the day (curated rotating lists)
 
 ## Local dev
 
@@ -60,93 +45,136 @@ cd briefing
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-# Render sample PDFs for all three styles
+# Regenerate all 9 sample PDFs into samples/
 python scripts/generate_samples.py
-open samples/
 
-# Or run the service
+# Run the live service
 uvicorn app.main:app --reload --port 8080
-# then open http://localhost:8080/preview/newspaper
+# preview (sample data only):
+#   open http://localhost:8080/preview/scripture
+# full briefing (tries real weather + ticker):
+#   open http://localhost:8080/briefing
+#   open "http://localhost:8080/briefing?style=spider-man"
 ```
 
-WeasyPrint needs Pango/Cairo system libs. On macOS: `brew install pango`.
-On Debian/Ubuntu: see the Dockerfile's `apt-get` line.
+WeasyPrint needs Pango/Cairo system libs. macOS: `brew install pango`.
+Linux: see the Dockerfile.
 
-## Deploying to Google Cloud Run
+## Deploy to Google Cloud Run
+
+### One-time setup
+You'll need:
+- A Google account (free tier covers this forever — Cloud Run gives 2M
+  requests/month and you'll make ~30)
+- The `gcloud` CLI: https://cloud.google.com/sdk/docs/install
+- ~10 minutes
 
 ```bash
-# One-time
+# Sign in and pick a project (create one if you don't have one).
 gcloud auth login
-gcloud config set project <YOUR_PROJECT_ID>
-gcloud services enable run.googleapis.com artifactregistry.googleapis.com
+gcloud projects create record-of-our-day --name="A Record of Our Day" || true
+gcloud config set project record-of-our-day
 
-# Deploy from source (Cloud Build handles container build)
-cd briefing
+# Enable the APIs we need.
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com
+```
+
+### Pick a secret
+Generate a random string that gates the endpoint so randos can't trigger
+prints. Anything ~24 chars is fine:
+
+```bash
+SECRET=$(python3 -c "import secrets; print(secrets.token_urlsafe(18))")
+echo "Your secret: $SECRET"   # save this — you'll paste it into the iOS Shortcut
+```
+
+### Deploy
+From the `briefing/` directory:
+
+```bash
 gcloud run deploy daily-briefing \
   --source . \
   --region us-central1 \
   --allow-unauthenticated \
   --memory 512Mi \
+  --cpu 1 \
   --concurrency 1 \
   --max-instances 2 \
-  --set-env-vars STYLE=newspaper,WEATHER_LAT=40.3417,WEATHER_LON=-111.7186,WEATHER_LOCATION_LABEL="Lindon, UT",TIMEZONE="America/Denver"
+  --set-env-vars "TIMEZONE=America/Denver" \
+  --set-env-vars "WEATHER_LAT=40.3417,WEATHER_LON=-111.7186,WEATHER_LOCATION_LABEL=Lindon, UT" \
+  --set-env-vars "TICKER_SYMBOL=SPY" \
+  --set-env-vars "COUNTDOWNS=Bear Lake Brawl Half Ironman@2026-09-19" \
+  --set-env-vars "BRIEFING_SHARED_SECRET=$SECRET"
 ```
 
-After it deploys you'll get a URL like
-`https://daily-briefing-xxxxx-uc.a.run.app`. The endpoint to hit from the
-Shortcut is `<url>/briefing` (with `?secret=...` once you set
-`BRIEFING_SHARED_SECRET`).
+First deploy takes ~3-5 minutes (Cloud Build builds the container from the
+Dockerfile). Subsequent deploys are faster.
 
-Cost: Cloud Run free tier (2M requests/month, 360k GB-seconds) covers ~30
-invocations/month forever. Cold start ~2-3 seconds with WeasyPrint loaded.
+When it's done, you'll see a URL like:
+```
+https://daily-briefing-xxxxxxxxxx-uc.a.run.app
+```
 
-## iOS Shortcut setup
+### Verify
+```bash
+URL=$(gcloud run services describe daily-briefing --region us-central1 --format='value(status.url)')
+curl -sI "$URL/healthz"                                    # → HTTP/2 200
+curl -s -o /tmp/today.pdf "$URL/briefing?secret=$SECRET"   # PDF file
+open /tmp/today.pdf                                        # see real weather + SPY
+```
 
-1. iPhone → **Shortcuts** app → **+** to create a new shortcut.
-2. Add **Get Contents of URL**.
-   - URL: `https://<your-cloud-run-url>/briefing?secret=<your-secret>`
+## iOS Shortcut
+
+1. Phone → **Shortcuts** app → **+** → name it "Print Today".
+2. **Get Contents of URL**
+   - URL: `<your-cloud-run-url>/briefing?secret=<your-secret>`
    - Method: GET
-   - (Toggle "Use Headers" off unless you want to set custom ones.)
-3. Add **Print**.
-   - Input: the previous step's "Contents of URL".
-   - Tap "Show Compose Sheet" → **OFF** (so it prints without confirmation).
-4. Tap **Done**. Run once to test — iOS will ask you to pick the printer
-   the first time; choose the LaserJet M201dw. Subsequent runs print silently.
+3. **Print**
+   - Input: "Contents of URL" from step 2
+   - Tap "Show Compose Sheet" → **OFF** (so it prints silently)
+4. Run once to test — iOS will ask which printer the first time; pick the
+   M201dw. From then on it prints with no taps.
 
-To bind it to the NFC tag:
-1. iPhone → **Shortcuts** → **Automation** tab → **+** → **NFC**.
-2. Scan your NFC tag.
-3. Action: **Run Shortcut** → pick the briefing shortcut.
-4. Toggle **Ask Before Running** to **OFF**.
+Bind to the NFC tag:
+1. Shortcuts → **Automation** tab → **+** → **NFC**
+2. Scan the tag
+3. Action: **Run Shortcut** → "Print Today"
+4. **Ask Before Running** → OFF
 
-Now: tap phone to tag → PDF prints. Phone must be on your home Wi-Fi
-(same network as the M201dw) at tap-time, which it will be if the tag is
-at home.
+Now: tap phone to tag → PDF prints. Phone must be on home Wi-Fi at tap
+time (same network as the printer); since the tag's at home, this is
+always true.
 
-## Required credentials (post-style-selection)
+## Configure later
 
-Set these as Cloud Run env vars or in a local `.env`:
+Set or update env vars without rebuilding:
+```bash
+gcloud run services update daily-briefing --region us-central1 \
+  --update-env-vars "STYLE=newspaper"   # pin a single style instead of day rotation
+```
 
-- `BRIEFING_SHARED_SECRET` — any random string; included as `?secret=` in
-  the Shortcut URL so randos can't print to your printer by guessing the URL.
-- `GOOGLE_OAUTH_CLIENT_SECRETS_PATH` + `GOOGLE_OAUTH_TOKEN_PATH` — for
-  Google Calendar. Use an OAuth installed-app flow: create a Desktop client
-  in Google Cloud Console, run a local one-time auth script to get a refresh
-  token, mount the resulting token file into the container.
-- `NOTION_TOKEN` — internal integration token from Notion. Create at
-  https://www.notion.so/my-integrations, then share the DCJ Task Board with
-  it from the database's "•••" → "Connections".
-- `NOTION_TASK_DATABASE_ID` — the 32-char ID from the database URL.
-- `NOTION_ASSIGNEE_USER_ID` — your Notion user ID, so the query filters to
-  your tasks only.
+All env vars (`briefing/app/config.py`):
+| Var | Default | Purpose |
+|---|---|---|
+| `STYLE` | unset | Pin a single style; overrides day-of-week rotation |
+| `STYLE_MONDAY` … `STYLE_SUNDAY` | terminal/spider-man/darwin/pokemon/stranger-things/newspaper/scripture | Per-day persona |
+| `TIMEZONE` | `America/Denver` | Used for "today" and weather |
+| `WEATHER_LAT` / `WEATHER_LON` | Lindon coords | Open-Meteo lookup |
+| `WEATHER_LOCATION_LABEL` | `Lindon, UT` | Display name on the page |
+| `TICKER_SYMBOL` | `SPY` | Yahoo Finance symbol (set empty to hide) |
+| `COUNTDOWNS` | Bear Lake | Comma-separated `"Label@YYYY-MM-DD"` entries |
+| `BRIEFING_SHARED_SECRET` | unset | Gate the endpoint; required if set |
+| `GOOGLE_OAUTH_*` / `NOTION_*` | unset | For wiring real calendar + tasks (next step) |
 
 ## Roadmap
 
-- [x] Three style templates with sample data
-- [x] Sample PDF generation for style selection
-- [ ] Pick a style (the only thing waiting on you)
-- [ ] Wire Google Calendar source
-- [ ] Wire Notion task source
-- [ ] Wire Open-Meteo into `/briefing` (currently uses sample weather)
+- [x] Nine persona templates fitting one Letter page each
+- [x] Real weather (Open-Meteo) + SPY (Yahoo Finance), no auth needed
+- [x] Day-of-week persona rotation with `?style=` override
+- [x] Day-of-rendering timezone-aware
+- [x] Graceful fallback to sample data when a source fetch fails
+- [ ] Wire Google Calendar (today's events + upcoming 7 days)
+- [ ] Wire Notion DCJ Task Board (top 10 by urgency)
+- [ ] Populate `come_follow_me_2026.json` (run `scripts/scrape_come_follow_me.py` locally)
 - [ ] Deploy to Cloud Run
-- [ ] Build iOS Shortcut and bind to NFC tag
+- [ ] Build iOS Shortcut + program NFC tag

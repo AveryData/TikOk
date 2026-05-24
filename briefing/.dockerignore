@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.env
+.git/
+.gitignore
+.dockerignore
+samples/
+scripts/
+README.md
+*.png
+*.log
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
