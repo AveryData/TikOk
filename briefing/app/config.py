@@ -27,10 +27,12 @@ class Settings(BaseSettings):
     weather_lon: float = -111.7186
     weather_location_label: str = "Lindon, UT"
 
-    # Google Calendar
-    google_calendar_id: str = "primary"
-    google_oauth_client_secrets_path: str | None = None
-    google_oauth_token_path: str | None = None
+    # Google Calendar (OAuth installed-app refresh token flow)
+    google_oauth_client_id: str | None = None
+    google_oauth_client_secret: str | None = None
+    google_oauth_refresh_token: str | None = None
+    # Comma-separated calendar IDs. Default to "primary" alias if unset.
+    google_calendar_ids: str = "primary"
 
     # Notion
     notion_token: str | None = None

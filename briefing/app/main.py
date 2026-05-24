@@ -12,6 +12,8 @@ from app.config import get_settings
 from app.models import Briefing, Countdown, TickerQuote, Weather
 from app.render.pdf import render_html, render_pdf
 from app.render.sample import sample_briefing
+from app.sources.calendar import fetch_today_and_upcoming
+from app.sources.tasks import fetch_top_tasks
 from app.sources.ticker import fetch_ticker
 from app.sources.weather import fetch_weather
 
@@ -96,8 +98,37 @@ def _build_briefing(for_date: date | None = None) -> Briefing:
         except Exception as exc:  # noqa: BLE001
             logger.warning("countdown parse failed: %s", exc)
 
-    # TODO: wire Notion (b.tasks) and Google Calendar (b.events, b.upcoming)
-    #       once tokens are configured. For now they remain sample data.
+    # Real Google Calendar (OAuth refresh-token flow).
+    if all([s.google_oauth_client_id, s.google_oauth_client_secret, s.google_oauth_refresh_token]):
+        try:
+            cal_ids = [c.strip() for c in s.google_calendar_ids.split(",") if c.strip()]
+            today_events, upcoming = fetch_today_and_upcoming(
+                client_id=s.google_oauth_client_id,
+                client_secret=s.google_oauth_client_secret,
+                refresh_token=s.google_oauth_refresh_token,
+                today=today,
+                tz_name=s.timezone,
+                calendar_ids=cal_ids,
+            )
+            b.events = today_events
+            b.upcoming = upcoming
+            logger.info("calendar fetched ok")
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("calendar fetch failed, using sample: %s", exc)
+
+    # Real Notion tasks.
+    if all([s.notion_token, s.notion_task_database_id, s.notion_assignee_user_id]):
+        try:
+            b.tasks = fetch_top_tasks(
+                notion_token=s.notion_token,
+                database_id=s.notion_task_database_id,
+                assignee_user_id=s.notion_assignee_user_id,
+                today=today,
+                limit=10,
+            )
+            logger.info("notion tasks fetched ok")
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("notion fetch failed, using sample: %s", exc)
 
     return b
 
