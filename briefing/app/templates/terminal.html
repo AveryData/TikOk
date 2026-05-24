@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>briefing.log :: {{ b.for_date.isoformat() }}</title>
+<style>
+  @page {
+    size: Letter;
+    margin: 0.5in 0.5in 0.4in 0.5in;
+  }
+  html, body {
+    font-family: "DejaVu Sans Mono", "Liberation Mono", "Courier 10 Pitch", monospace;
+    color: #0a0a0a;
+    background: #fbfbf6;
+  }
+  body { font-size: 8.5pt; line-height: 1.35; margin: 0; }
+
+  .scanlines {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 1.6pt,
+      rgba(0,0,0,0.03) 1.6pt,
+      rgba(0,0,0,0.03) 2.4pt
+    );
+  }
+
+  /* Box-drawn header */
+  .header {
+    border: 1pt solid #0a0a0a;
+    padding: 4pt 8pt;
+    margin-bottom: 4pt;
+    background: #0a0a0a;
+    color: #f2f0e6;
+    font-size: 9pt;
+  }
+  .header .prompt { color: #65d364; font-weight: 700; }
+  .header .title { font-weight: 700; letter-spacing: 0.1em; font-size: 11pt; margin-top: 1pt; }
+  .header .meta { font-size: 7.5pt; color: #aaa; margin-top: 1pt; }
+
+  .sys {
+    color: #2d5e2d;
+    margin: 1pt 0;
+    font-size: 8.5pt;
+  }
+  .sys .tag { font-weight: 700; }
+
+  /* Section header: //SECTION.NAME ════════════ */
+  .sect {
+    font-weight: 700;
+    margin: 4pt 0 2pt 0;
+    padding-bottom: 0;
+    font-size: 8.5pt;
+    letter-spacing: 0.04em;
+  }
+  .sect .rule {
+    color: #999;
+    letter-spacing: 0;
+  }
+
+  /* Stat row */
+  .stat-row {
+    display: flex;
+    gap: 12pt;
+    font-size: 8.5pt;
+  }
+  .stat-row .cell { flex: 1; }
+  .stat-row .tag { color: #2d5e2d; font-weight: 700; }
+  .stat-row .pos { color: #1c5e1c; font-weight: 700; }
+  .stat-row .neg { color: #8a1a1a; font-weight: 700; }
+
+  pre, .pre {
+    font-family: inherit;
+    margin: 0;
+    white-space: pre;
+    font-size: 8.5pt;
+    line-height: 1.3;
+  }
+
+  .bar-line { font-size: 8pt; letter-spacing: 0; }
+
+  /* Two-column body */
+  .body-grid {
+    display: flex;
+    gap: 14pt;
+    margin-top: 4pt;
+  }
+  .body-grid .col { flex: 1; }
+
+  .body-grid .col-left { border-right: 0.6pt dashed #444; padding-right: 14pt; }
+
+  .log .row {
+    display: flex;
+    margin-bottom: 1.5pt;
+    font-size: 8.5pt;
+  }
+  .log .ts {
+    flex: 0 0 48pt;
+    color: #2d5e2d;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .log .arrow {
+    flex: 0 0 12pt;
+    color: #888;
+  }
+  .log .body { flex: 1; }
+  .log .body .title { font-weight: 700; }
+  .log .body .loc { color: #555; }
+
+  .queue .row {
+    display: flex;
+    margin-bottom: 2pt;
+    font-size: 8.5pt;
+  }
+  .queue .idx {
+    flex: 0 0 26pt;
+    color: #2d5e2d;
+    font-weight: 700;
+  }
+  .queue .sev {
+    flex: 0 0 28pt;
+    text-align: center;
+    font-weight: 700;
+  }
+  .queue .sev.s-3 { color: #8a1a1a; }
+  .queue .sev.s-2 { color: #c46a00; }
+  .queue .sev.s-1 { color: #2d5e2d; }
+  .queue .sev.s-0 { color: #888; }
+  .queue .body { flex: 1; }
+  .queue .body .title { font-weight: 700; }
+  .queue .body .meta { color: #666; font-size: 7.5pt; }
+  .queue .past-due .title { color: #8a1a1a; }
+  .queue .past-due .title::after { content: " [OVERDUE]"; font-weight: 700; color: #8a1a1a; }
+
+  /* CFM block */
+  .cfm {
+    border-top: 0.6pt solid #0a0a0a;
+    border-bottom: 0.6pt solid #0a0a0a;
+    padding: 4pt 0;
+    margin: 4pt 0 0 0;
+    font-size: 8.5pt;
+  }
+  .cfm .prompt { color: #2d5e2d; font-weight: 700; }
+  .cfm .ref { font-weight: 700; margin: 1pt 0 1pt 16pt; }
+  .cfm .out { color: #555; margin-left: 16pt; }
+
+  /* Bottom: prayer + quote/joke */
+  .bottom {
+    display: flex;
+    gap: 14pt;
+    margin-top: 6pt;
+  }
+  .bottom .col { flex: 1; }
+  .bottom .col-left { flex: 0 0 220pt; }
+
+  .prayer {
+    font-size: 8pt;
+  }
+  .prayer .title { color: #2d5e2d; font-weight: 700; }
+  .prayer pre.box {
+    border: 0.6pt solid #0a0a0a;
+    padding: 6pt 8pt;
+    height: 90pt;
+    line-height: 18pt;
+    background: rgba(255,255,255,0.5);
+  }
+  .prayer pre.box .underscore {
+    color: #aaa;
+    letter-spacing: 0.5pt;
+  }
+
+  .quote {
+    border-top: 0.6pt solid #0a0a0a;
+    border-bottom: 0.6pt solid #0a0a0a;
+    padding: 4pt 0;
+    margin-bottom: 4pt;
+    font-size: 8.5pt;
+    line-height: 1.4;
+  }
+  .quote .title { color: #2d5e2d; font-weight: 700; }
+  .quote .text { font-style: italic; margin-top: 1pt; }
+  .quote .attr { color: #555; font-size: 7.5pt; margin-top: 2pt; }
+
+  .joke .title { color: #2d5e2d; font-weight: 700; font-size: 8.5pt; }
+  .joke .text { font-style: italic; font-size: 8.5pt; margin-top: 1pt; }
+
+  footer {
+    margin-top: 6pt;
+    padding-top: 4pt;
+    border-top: 0.6pt solid #0a0a0a;
+    font-size: 7.5pt;
+    color: #555;
+  }
+  footer .prompt { color: #2d5e2d; font-weight: 700; }
+</style>
+</head>
+<body class="scanlines">
+
+<div class="header">
+  <span class="prompt">avery@home</span>:<span style="color:#9cc7ff">~/briefing</span>$ ./record-of-our-day --date={{ b.for_date.isoformat() }}
+  <div class="title">// A RECORD OF OUR DAY</div>
+  <div class="meta">build {{ b.for_date.strftime("%Y%m%d") }} · op=avery · loc={{ b.weather.location }} · tz={{ b.for_date.strftime("%Z") or "MDT" }}</div>
+</div>
+
+<div class="sys"><span class="tag">[init]</span> session active. {{ b.greeting | lower }}. uptime since 06:02. ttl ~16h.</div>
+
+<div class="sect">// WEATHER.NOW <span class="rule">═══════════════════════════════════════════════════════════════════════════</span></div>
+<div class="stat-row">
+  <div class="cell"><span class="tag">temp</span>=<strong>{{ b.weather.current_f }}F</strong> · <span class="tag">hi</span>={{ b.weather.high_f }}F · <span class="tag">lo</span>={{ b.weather.low_f }}F · <span class="tag">precip</span>={{ b.weather.precip_chance_today }}%</div>
+  <div class="cell"><span class="tag">cond</span>={{ b.weather.summary | upper | replace(' ', '_') | replace(',_', '_+_') }}</div>
+  <div class="cell" style="flex:0 0 130pt;"><span class="tag">sunrise</span>={{ b.weather.sunrise.replace(' ', '').replace('am','').replace('pm','') }} <span class="tag">sunset</span>={{ b.weather.sunset.replace(' ', '').replace('am','').replace('pm','') }}</div>
+</div>
+
+<div class="sect">// MARKET.SPY &amp; TIMERS <span class="rule">════════════════════════════════════════════════════════════════════</span></div>
+<div class="stat-row">
+  {% if b.ticker %}
+  <div class="cell">
+    <span class="tag">SPY</span>=<strong>${{ "%.2f"|format(b.ticker.price) }}</strong> ·
+    <span class="tag">7d</span>=<span class="{% if b.ticker.pct_change_7d is not none and b.ticker.pct_change_7d >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_7d }}</span> ·
+    <span class="tag">30d</span>=<span class="{% if b.ticker.pct_change_30d is not none and b.ticker.pct_change_30d >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_30d }}</span> ·
+    <span class="tag">ytd</span>=<span class="{% if b.ticker.pct_change_ytd is not none and b.ticker.pct_change_ytd >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_ytd }}</span>
+  </div>
+  {% endif %}
+  {% for c in b.countdowns %}
+  <div class="cell">
+    <span class="tag">timer</span>=t-<strong>{{ c.days_until(b.for_date) }}d</strong> :: {{ c.label | upper | replace(' ', '_') }} @ {{ c.target.isoformat() }}
+  </div>
+  {% endfor %}
+</div>
+
+{% if b.year_progress %}
+<div class="sect">// YEAR.PROGRESS <span class="rule">═══════════════════════════════════════════════════════════════════════════</span></div>
+<div class="bar-line">
+  [{{ b.year_progress.pct | ascii_bar(48) }}] <strong>{{ b.year_progress.pct_label }}</strong>
+  · day <strong>{{ b.year_progress.day_of_year }}</strong> / {{ b.year_progress.days_in_year }}
+</div>
+{% endif %}
+
+<div class="body-grid">
+
+  <div class="col col-left">
+    <div class="sect">// AGENDA.LOG <span class="rule">════════════════════════════════════════</span></div>
+    <div class="log">
+      {% for e in b.events %}
+      <div class="row">
+        <div class="ts">[{% if e.start %}{{ e.start | time_log }}{% else %}--:--{% endif %}]</div>
+        <div class="arrow">&gt;&gt;</div>
+        <div class="body">
+          <span class="title">{{ e.title }}</span>
+          {% if e.location %} <span class="loc">@ {{ e.location }}</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if b.upcoming %}
+    <div class="sect">// SCHEDULE.NEXT_7D <span class="rule">═══════════════════════════════════</span></div>
+    <div class="log">
+      {% for u in b.upcoming %}
+      <div class="row">
+        <div class="ts">[{{ u.when.strftime("%a") }} {{ u.when.month }}/{{ u.when.day }}]</div>
+        <div class="arrow">&gt;&gt;</div>
+        <div class="body">
+          <span class="title">{{ u.title }}</span>
+          {% if u.time_label %} <span class="loc">@ {{ u.time_label }}</span>{% endif %}
+          {% if u.location %} <span class="loc">· {{ u.location }}</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col">
+    <div class="sect">// QUEUE.JSON · TOP_10 <span class="rule">═════════════════════════════════</span></div>
+    <div class="queue">
+      {% for t in b.tasks %}
+        {% set sev = ({"Ultra High": 3, "High": 2, "Medium": 1, "Low": 0, "None": 0}).get(t.priority.value, 0) %}
+      <div class="row {% if t.is_past_due %}past-due{% endif %}">
+        <div class="idx">[{{ "%02d"|format(loop.index) }}]</div>
+        <div class="sev s-{{ sev }}">{{ t.priority.value | priority_marker }}</div>
+        <div class="body">
+          <span class="title">{{ t.title }}</span><br>
+          <span class="meta">prio={{ t.priority.value|upper }}{% if t.project %} proj={{ t.project | replace(' ', '_') }}{% endif %}{% if t.due %} due={{ t.due.isoformat() }}{% endif %}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+{% if b.come_follow_me %}
+<div class="cfm">
+  <span class="prompt">$ cat scripture/ot_2026/week_{{ b.come_follow_me.week_label | replace(' ', '_') | replace('–','-') }}.txt</span>
+  <div class="ref">&gt; {{ b.come_follow_me.week_reference }}</div>
+  {% if b.come_follow_me.week_theme %}<div class="out">theme: {{ b.come_follow_me.week_theme }}</div>{% endif %}
+  {% if b.come_follow_me.today_reference %}<div class="out">today: {{ b.come_follow_me.today_reference }}</div>{% endif %}
+</div>
+{% endif %}
+
+<div class="bottom">
+
+  <div class="col col-left">
+    <div class="prayer">
+      <div class="title">// PRAYER.input · write-only buffer</div>
+<pre class="box"><span class="underscore">________________________________________
+________________________________________
+________________________________________
+________________________________________
+________________________________________</span></pre>
+    </div>
+  </div>
+
+  <div class="col">
+    {% if b.quote %}
+    <div class="quote">
+      <div class="title">$ cat /usr/share/wisdom/today</div>
+      <div class="text">&gt; "{{ b.quote.text }}"</div>
+      {% if b.quote.attribution %}<div class="attr">  — {{ b.quote.attribution }}</div>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if b.joke %}
+    <div class="joke">
+      <div class="title">$ humor --random</div>
+      <div class="text">&gt; {{ b.joke }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<footer>
+  <span class="prompt">[eof]</span> printed {{ b.for_date.isoformat() }} {{ b.for_date.strftime("%H:%M") or "06:00" }} · exit 0 · a record of our day
+</footer>
+
+</body>
+</html>

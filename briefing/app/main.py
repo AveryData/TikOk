@@ -13,7 +13,7 @@ from app.render.sample import sample_briefing
 
 app = FastAPI(title="Daily Briefing Printer", version="0.1.0")
 
-Style = Literal["newspaper", "dashboard", "minimalist"]
+Style = Literal["newspaper", "dashboard", "minimalist", "scripture", "terminal"]
 
 
 def _build_briefing(for_date: date | None = None) -> Briefing:

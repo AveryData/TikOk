@@ -18,7 +18,7 @@ def main() -> None:
 
     briefing = sample_briefing(today=date(2026, 5, 24))
 
-    for style in ("newspaper", "dashboard", "minimalist"):
+    for style in ("newspaper", "dashboard", "minimalist", "scripture", "terminal"):
         pdf_bytes = render_pdf(briefing, style)  # type: ignore[arg-type]
         out_path = out_dir / f"briefing-{style}.pdf"
         out_path.write_bytes(pdf_bytes)
