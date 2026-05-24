@@ -100,12 +100,12 @@ gcloud run deploy daily-briefing \
   --cpu 1 \
   --concurrency 1 \
   --max-instances 2 \
-  --set-env-vars "TIMEZONE=America/Denver" \
-  --set-env-vars "WEATHER_LAT=40.3417,WEATHER_LON=-111.7186,WEATHER_LOCATION_LABEL=Lindon, UT" \
-  --set-env-vars "TICKER_SYMBOL=SPY" \
-  --set-env-vars "COUNTDOWNS=Bear Lake Brawl Half Ironman@2026-09-19" \
-  --set-env-vars "BRIEFING_SHARED_SECRET=$SECRET"
+  --set-env-vars "^|^TIMEZONE=America/Denver|WEATHER_LAT=40.3417|WEATHER_LON=-111.7186|WEATHER_LOCATION_LABEL=Lindon, UT|TICKER_SYMBOL=SPY|COUNTDOWNS=Bear Lake Brawl Half Ironman@2026-09-19|BRIEFING_SHARED_SECRET=$SECRET"
 ```
+
+> The `^|^` prefix tells gcloud to split env vars on `|` instead of the
+> default `,`. We need it because `WEATHER_LOCATION_LABEL` and `COUNTDOWNS`
+> can contain commas of their own.
 
 First deploy takes ~3-5 minutes (Cloud Build builds the container from the
 Dockerfile). Subsequent deploys are faster.
