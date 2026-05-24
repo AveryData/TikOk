@@ -90,8 +90,12 @@
   .stats .neg { color: #8a0000; font-weight: 700; }
 
   /* ===== Year progress strip ===== */
+  /* Grid layout — nested flex was collapsing the months row in some
+     WeasyPrint builds, especially when the surrounding font fell back
+     from Charter to DejaVu Serif (wider stat text squeezed the middle). */
   .year {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 8pt;
     padding: 2pt 0 3pt 0;
@@ -102,15 +106,14 @@
     font-size: 7.5pt;
     text-transform: uppercase;
     letter-spacing: 0.16em;
-    flex: 0 0 auto;
   }
   .year .months {
-    flex: 1;
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
     gap: 2pt;
+    width: 100%;
   }
   .year .month {
-    flex: 1;
     height: 11pt;
     border: 0.4pt solid #111;
     font-size: 6pt;
@@ -408,7 +411,11 @@
         <li class="{% if t.is_past_due %}past-due{% endif %}">
           <span class="title">{{ t.title }}</span><br>
           <span class="meta">
-            {{ t.priority.value }}{% if t.project %} &middot; {{ t.project }}{% endif %}{% if t.due %} &middot; due {{ t.due | due }}{% if t.is_past_due %} (past due){% endif %}{% endif %}
+            {% set parts = [] %}
+            {% if t.priority.value not in ("None", "") %}{% set _ = parts.append(t.priority.value) %}{% endif %}
+            {% if t.project %}{% set _ = parts.append(t.project) %}{% endif %}
+            {% if t.due %}{% set _ = parts.append("due " ~ (t.due | due) ~ (" (past due)" if t.is_past_due else "")) %}{% endif %}
+            {{ parts | join(" · ") }}
           </span>
         </li>
         {% endfor %}

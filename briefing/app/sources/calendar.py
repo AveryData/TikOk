@@ -89,11 +89,17 @@ def fetch_today_and_upcoming(
     today: date,
     tz_name: str,
     calendar_ids: list[str],
+    upcoming_limit: int = 10,
+    upcoming_include_recurring: bool = False,
 ) -> tuple[list[CalendarEvent], list[UpcomingEvent]]:
     """Returns (today_events, upcoming_events).
 
-    upcoming_events covers tomorrow through 7 days out (excludes today).
-    Events are merged across all configured calendars and sorted by start.
+    today_events: everything scheduled for `today` across all calendars
+        (including recurring routine events like "Starting Work Day").
+    upcoming_events: next 7 days (excluding today). By default filters
+        OUT recurring events (which tend to be daily routine noise like
+        "Email" or "Prep Kids For Day") and caps at `upcoming_limit`.
+        Set upcoming_include_recurring=True to keep them.
     """
     tz = ZoneInfo(tz_name)
     start_of_today = datetime.combine(today, time(0, 0), tzinfo=tz)
@@ -141,6 +147,11 @@ def fetch_today_and_upcoming(
                     location=location,
                 ))
             else:
+                # Skip recurring events for the upcoming-week digest —
+                # daily routine items like "Email" or "Prep Kids For Day"
+                # otherwise drown out the one-off events worth knowing about.
+                if not upcoming_include_recurring and item.get("recurringEventId"):
+                    continue
                 upcoming.append(UpcomingEvent(
                     title=title,
                     when=start_dt,
@@ -149,9 +160,10 @@ def fetch_today_and_upcoming(
 
     today_events.sort(key=lambda e: (not e.all_day, e.start or start_of_today))
     upcoming.sort(key=lambda u: u.when)
+    upcoming = upcoming[:upcoming_limit]
 
     logger.info(
-        "calendar: %d events today, %d upcoming (across %d calendar(s))",
-        len(today_events), len(upcoming), len(calendar_ids),
+        "calendar: %d events today, %d upcoming (across %d calendar(s), cap=%d)",
+        len(today_events), len(upcoming), len(calendar_ids), upcoming_limit,
     )
     return today_events, upcoming
