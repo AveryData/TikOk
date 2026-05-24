@@ -8,8 +8,19 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    style: str = "newspaper"  # newspaper | dashboard | minimalist
+    # Day-of-week persona rotation. Set STYLE in env to pin one style;
+    # otherwise the day chooses. Manual ?style= on a request always wins.
+    style: str | None = None
     timezone: str = "America/Denver"
+
+    # Default rotation (Mon..Sun). Override via env var if you want.
+    style_monday: str = "terminal"
+    style_tuesday: str = "spider-man"
+    style_wednesday: str = "darwin"
+    style_thursday: str = "pokemon"
+    style_friday: str = "stranger-things"
+    style_saturday: str = "newspaper"
+    style_sunday: str = "scripture"
 
     # Location for weather
     weather_lat: float = 40.3417

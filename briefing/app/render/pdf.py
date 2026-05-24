@@ -9,7 +9,11 @@ from weasyprint import HTML
 from app.models import Briefing
 from app.render import narration
 
-Style = Literal["newspaper", "dashboard", "minimalist", "scripture", "terminal"]
+Style = Literal[
+    "newspaper", "dashboard", "minimalist",
+    "scripture", "terminal", "darwin", "stranger-things",
+    "spider-man", "pokemon",
+]
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 
