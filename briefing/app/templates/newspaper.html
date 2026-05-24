@@ -2,117 +2,296 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Daily Briefing — {{ b.for_date | date_short }}</title>
+<title>A Record of Our Day — {{ b.for_date | date_short }}</title>
 <style>
   @page {
     size: Letter;
-    margin: 0.55in 0.6in 0.45in 0.6in;
+    margin: 0.4in 0.5in 0.35in 0.5in;
   }
   html, body { font-family: "Bitstream Charter", "Charter", "Georgia", serif; color: #111; }
-  body { font-size: 10.5pt; line-height: 1.35; margin: 0; }
+  body { font-size: 9pt; line-height: 1.25; margin: 0; }
 
+  /* ===== Masthead ===== */
   .masthead {
     text-align: center;
     border-top: 2pt solid #111;
     border-bottom: 0.5pt solid #111;
-    padding: 6pt 0 4pt 0;
-    margin-bottom: 2pt;
+    padding: 5pt 0 3pt 0;
   }
   .masthead .title {
-    font-size: 22pt;
+    font-size: 24pt;
     font-weight: 700;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
+    line-height: 1.05;
   }
   .masthead .subline {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    font-size: 8.5pt;
+    font-size: 8pt;
     font-style: italic;
     margin-top: 3pt;
     padding-top: 3pt;
     border-top: 0.5pt solid #111;
+    letter-spacing: 0.05em;
   }
-  .masthead .vol { letter-spacing: 0.05em; }
-  .masthead .date { font-weight: 700; font-style: normal; letter-spacing: 0.05em; text-transform: uppercase; }
-  .masthead .city { letter-spacing: 0.05em; }
+  .masthead .date { font-weight: 700; font-style: normal; text-transform: uppercase; }
 
   .greeting {
     text-align: center;
     font-style: italic;
-    font-size: 11pt;
-    margin: 10pt 0 4pt 0;
+    font-size: 10pt;
+    margin: 4pt 0 3pt 0;
   }
 
-  .weatherbar {
+  /* ===== Weather strip ===== */
+  .weather {
     text-align: center;
-    font-size: 9.5pt;
+    font-size: 8.5pt;
+    line-height: 1.25;
     border-top: 0.5pt solid #111;
     border-bottom: 0.5pt solid #111;
-    padding: 4pt 0;
-    margin-bottom: 14pt;
+    padding: 2pt 0;
   }
-  .weatherbar .label { text-transform: uppercase; letter-spacing: 0.12em; font-size: 8pt; }
-  .weatherbar .summary { font-style: italic; }
-  .weatherbar .stats { font-weight: 700; }
+  .weather .strong { font-weight: 700; }
+  .weather .summary { font-style: italic; }
 
-  .columns { column-count: 2; column-gap: 24pt; column-rule: 0.5pt solid #111; }
+  /* ===== Stats strip (ticker + countdowns) ===== */
+  .stats {
+    display: flex;
+    border-bottom: 0.5pt solid #111;
+    margin-bottom: 0;
+  }
+  .stats .cell {
+    flex: 1;
+    padding: 2pt 8pt 3pt 8pt;
+    border-right: 0.5pt solid #111;
+    text-align: center;
+  }
+  .stats .cell:last-child { border-right: 0; }
+  .stats .cell .label {
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #555;
+  }
+  .stats .cell .value {
+    font-size: 11pt;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-top: 1pt;
+  }
+  .stats .cell .sub {
+    font-size: 8pt;
+    font-variant-numeric: tabular-nums;
+    margin-top: 1pt;
+  }
+  .stats .pos { color: #0a5e0a; font-weight: 700; }
+  .stats .neg { color: #8a0000; font-weight: 700; }
+
+  /* ===== Year progress strip ===== */
+  .year {
+    display: flex;
+    align-items: center;
+    gap: 8pt;
+    padding: 2pt 0 3pt 0;
+    margin-bottom: 4pt;
+    border-bottom: 0.5pt solid #111;
+  }
+  .year .label {
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    flex: 0 0 auto;
+  }
+  .year .months {
+    flex: 1;
+    display: flex;
+    gap: 2pt;
+  }
+  .year .month {
+    flex: 1;
+    height: 11pt;
+    border: 0.4pt solid #111;
+    font-size: 6pt;
+    text-align: center;
+    line-height: 11pt;
+    color: #555;
+    position: relative;
+    overflow: hidden;
+  }
+  .year .month.done { background: #111; color: #fff; }
+  .year .month .fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: #111;
+    z-index: 0;
+  }
+  .year .month .letter {
+    position: relative;
+    z-index: 1;
+    mix-blend-mode: difference;
+    color: #fff;
+  }
+  .year .stat {
+    font-size: 8.5pt;
+    font-variant-numeric: tabular-nums;
+    flex: 0 0 auto;
+    font-weight: 700;
+  }
+
+  /* ===== Two-column main body ===== */
+  .body-grid {
+    display: flex;
+    gap: 12pt;
+    border-bottom: 0.5pt solid #111;
+    padding-bottom: 4pt;
+    margin-bottom: 4pt;
+  }
+  .body-grid .col { flex: 1; }
+  .body-grid .col-left  { border-right: 0.5pt solid #111; padding-right: 12pt; }
 
   h2.section {
-    font-size: 9pt;
+    font-size: 8pt;
     text-transform: uppercase;
     letter-spacing: 0.18em;
     text-align: center;
-    margin: 0 0 6pt 0;
-    padding-bottom: 3pt;
+    margin: 0 0 3pt 0;
+    padding-bottom: 1pt;
     border-bottom: 0.5pt solid #111;
-    break-after: avoid;
   }
+  h2.section.tight { margin-top: 6pt; }
 
-  .agenda { break-inside: avoid; }
+  /* ===== Today's agenda ===== */
   .agenda .event {
     display: flex;
-    margin-bottom: 7pt;
-    break-inside: avoid;
+    margin-bottom: 3pt;
   }
   .agenda .time {
-    flex: 0 0 78pt;
+    flex: 0 0 68pt;
     font-variant-numeric: tabular-nums;
     font-weight: 700;
-    font-size: 9.5pt;
-    padding-top: 1pt;
+    font-size: 8.5pt;
   }
-  .agenda .body {
-    flex: 1;
-    padding-left: 6pt;
-    border-left: 0.5pt solid #555;
-  }
+  .agenda .body { flex: 1; padding-left: 5pt; border-left: 0.5pt solid #555; font-size: 9pt; }
   .agenda .body .title { font-weight: 700; }
-  .agenda .body .loc { font-style: italic; font-size: 9pt; color: #444; }
+  .agenda .body .loc { font-style: italic; font-size: 8pt; color: #444; }
 
-  .tasks { break-inside: avoid-column; }
-  .tasks ol { margin: 0; padding-left: 18pt; }
-  .tasks li {
-    margin-bottom: 6pt;
-    break-inside: avoid;
-    padding-left: 2pt;
+  /* ===== Upcoming this week ===== */
+  .upcoming .row {
+    display: flex;
+    margin-bottom: 2pt;
+    font-size: 8.5pt;
   }
-  .tasks .title { font-weight: 700; }
-  .tasks .meta { font-size: 8.5pt; font-style: italic; color: #444; }
+  .upcoming .when {
+    flex: 0 0 64pt;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+  .upcoming .what { flex: 1; }
+  .upcoming .what .loc { font-style: italic; font-size: 7.5pt; color: #444; }
+
+  /* ===== Tasks ===== */
+  .tasks ol { margin: 0; padding-left: 14pt; }
+  .tasks li { margin-bottom: 2pt; }
+  .tasks .title { font-weight: 700; font-size: 9pt; }
+  .tasks .meta { font-size: 7.5pt; font-style: italic; color: #444; }
   .tasks .past-due { color: #8a0000; }
-  .tasks .past-due .title::after {
-    content: " ★";
+  .tasks .past-due .title::after { content: " ★"; font-style: normal; color: #8a0000; }
+
+  /* ===== Come Follow Me ===== */
+  .cfm {
+    text-align: center;
+    padding: 3pt 0 4pt 0;
+    margin-bottom: 5pt;
+    border-bottom: 0.5pt solid #111;
+    border-top: 0.5pt solid #111;
+  }
+  .cfm .label {
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+  }
+  .cfm .ref {
+    font-size: 10.5pt;
+    font-weight: 700;
+    margin: 1pt 0;
+  }
+  .cfm .theme { font-style: italic; font-size: 8.5pt; }
+  .cfm .today { font-size: 8.5pt; margin-top: 1pt; }
+  .cfm .today .lbl { text-transform: uppercase; letter-spacing: 0.1em; font-size: 7pt; }
+
+  /* ===== Bottom row: prayer + joke/quote ===== */
+  .bottom {
+    display: flex;
+    gap: 14pt;
+  }
+  .bottom .col { flex: 1; }
+  .bottom .col-left { flex: 0 0 220pt; }
+
+  .prayer-box {
+    border: 0.75pt solid #111;
+    height: 105pt;
+    padding: 4pt 7pt;
+    display: flex;
+    flex-direction: column;
+  }
+  .prayer-box .label {
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    border-bottom: 0.4pt solid #111;
+    padding-bottom: 2pt;
+    margin-bottom: 4pt;
+  }
+  .prayer-box .lines {
+    flex: 1;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 17pt,
+      #ccc 17pt,
+      #ccc 17.4pt
+    );
+  }
+
+  .quote {
+    border-top: 0.5pt solid #111;
+    border-bottom: 0.5pt solid #111;
+    padding: 4pt 0;
+    margin-bottom: 4pt;
+    font-style: italic;
+    text-align: center;
+    font-size: 9.5pt;
+    line-height: 1.35;
+  }
+  .quote .attr {
+    display: block;
     font-style: normal;
-    color: #8a0000;
+    font-size: 8pt;
+    margin-top: 2pt;
+    color: #444;
+  }
+
+  .joke .label {
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    text-align: center;
+    margin-bottom: 2pt;
+  }
+  .joke .text {
+    font-size: 9pt;
+    text-align: center;
+    font-style: italic;
   }
 
   footer {
-    margin-top: 18pt;
-    padding-top: 4pt;
+    margin-top: 5pt;
+    padding-top: 2pt;
     border-top: 0.5pt solid #111;
     text-align: center;
-    font-size: 8pt;
+    font-size: 7pt;
     font-style: italic;
     color: #444;
   }
@@ -121,58 +300,163 @@
 <body>
 
 <div class="masthead">
-  <div class="title">The Daily Briefing</div>
+  <div class="title">A Record of Our Day</div>
   <div class="subline">
-    <span class="vol">Vol. I &mdash; No. {{ b.for_date.toordinal() % 1000 }}</span>
+    <span>Vol. I &middot; No. {{ b.for_date.toordinal() % 1000 }}</span>
     <span class="date">{{ b.for_date | date_long }}</span>
-    <span class="city">{{ b.weather.location }}</span>
+    <span>{{ b.weather.location }}</span>
   </div>
 </div>
 
 <div class="greeting">{{ b.greeting }}.</div>
 
-<div class="weatherbar">
-  <span class="stats">{{ b.weather.current_f }}° now</span> &nbsp;·&nbsp;
-  High <span class="stats">{{ b.weather.high_f }}°</span>, low <span class="stats">{{ b.weather.low_f }}°</span> &nbsp;·&nbsp;
-  Precip <span class="stats">{{ b.weather.precip_chance_today }}%</span> &nbsp;·&nbsp;
-  Sun <span class="stats">{{ b.weather.sunrise }} – {{ b.weather.sunset }}</span><br>
+<div class="weather">
+  <span class="strong">{{ b.weather.current_f }}° now</span> &middot;
+  High <span class="strong">{{ b.weather.high_f }}°</span>, low <span class="strong">{{ b.weather.low_f }}°</span> &middot;
+  Precip <span class="strong">{{ b.weather.precip_chance_today }}%</span> &middot;
+  Sun <span class="strong">{{ b.weather.sunrise }} – {{ b.weather.sunset }}</span><br>
   <span class="summary">{{ b.weather.summary }}.</span>
 </div>
 
-<div class="columns">
-
-  <section class="agenda">
-    <h2 class="section">Today&rsquo;s Agenda</h2>
-    {% for e in b.events %}
-    <div class="event">
-      <div class="time">{{ e.time_range }}</div>
-      <div class="body">
-        <div class="title">{{ e.title }}</div>
-        {% if e.location %}<div class="loc">{{ e.location }}</div>{% endif %}
-      </div>
+{% if b.ticker or b.countdowns %}
+<div class="stats">
+  {% if b.ticker %}
+  <div class="cell">
+    <div class="label">{{ b.ticker.symbol }} &middot; ${{ "%.2f"|format(b.ticker.price) }}</div>
+    <div class="sub">
+      7d
+      <span class="{% if b.ticker.pct_change_7d is not none and b.ticker.pct_change_7d >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_7d }}</span>
+      &middot; 30d
+      <span class="{% if b.ticker.pct_change_30d is not none and b.ticker.pct_change_30d >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_30d }}</span>
+      &middot; YTD
+      <span class="{% if b.ticker.pct_change_ytd is not none and b.ticker.pct_change_ytd >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_ytd }}</span>
     </div>
-    {% endfor %}
-  </section>
+  </div>
+  {% endif %}
+  {% for c in b.countdowns %}
+  <div class="cell">
+    <div class="label">Countdown</div>
+    <div class="value">{{ c.days_until(b.for_date) }} days</div>
+    <div class="sub">{{ c.label }} &middot; {{ c.target.strftime("%b %-d") }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
 
-  <section class="tasks">
-    <h2 class="section">Priorities</h2>
-    <ol>
-      {% for t in b.tasks %}
-      <li class="{% if t.is_past_due %}past-due{% endif %}">
-        <span class="title">{{ t.title }}</span><br>
-        <span class="meta">
-          {{ t.priority.value }}{% if t.project %} &middot; {{ t.project }}{% endif %}{% if t.due %} &middot; due {{ t.due | due }}{% if t.is_past_due %} (past due){% endif %}{% endif %}
-        </span>
-      </li>
+{% if b.year_progress %}
+<div class="year">
+  <span class="label">Year</span>
+  <div class="months">
+    {% set today_month = b.for_date.month %}
+    {% set day = b.for_date.day %}
+    {% set days_in_month = [31, 29 if (b.for_date.year % 4 == 0 and (b.for_date.year % 100 != 0 or b.for_date.year % 400 == 0)) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31] %}
+    {% for m in range(1, 13) %}
+      {% set letter = ["J","F","M","A","M","J","J","A","S","O","N","D"][m-1] %}
+      {% if m < today_month %}
+        <div class="month done">{{ letter }}</div>
+      {% elif m == today_month %}
+        {% set fill_pct = (day / days_in_month[m-1] * 100) | round %}
+        <div class="month current">
+          <div class="fill" style="width: {{ fill_pct }}%;"></div>
+          <span class="letter">{{ letter }}</span>
+        </div>
+      {% else %}
+        <div class="month">{{ letter }}</div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <span class="stat">Day {{ b.year_progress.day_of_year }} of {{ b.year_progress.days_in_year }} &middot; {{ b.year_progress.pct_label }}</span>
+</div>
+{% endif %}
+
+<div class="body-grid">
+
+  <div class="col col-left">
+    <section class="agenda">
+      <h2 class="section">Today&rsquo;s Agenda</h2>
+      {% for e in b.events %}
+      <div class="event">
+        <div class="time">{{ e.time_range }}</div>
+        <div class="body">
+          <div class="title">{{ e.title }}</div>
+          {% if e.location %}<div class="loc">{{ e.location }}</div>{% endif %}
+        </div>
+      </div>
       {% endfor %}
-    </ol>
-  </section>
+    </section>
+
+    {% if b.upcoming %}
+    <section class="upcoming">
+      <h2 class="section tight">This Week</h2>
+      {% for u in b.upcoming %}
+      <div class="row">
+        <div class="when">{{ u.day_label }}{% if u.time_label %} {{ u.time_label }}{% endif %}</div>
+        <div class="what">
+          {{ u.title }}{% if u.location %} <span class="loc">&middot; {{ u.location }}</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+  </div>
+
+  <div class="col">
+    <section class="tasks">
+      <h2 class="section">Top 10 Priorities</h2>
+      <ol>
+        {% for t in b.tasks %}
+        <li class="{% if t.is_past_due %}past-due{% endif %}">
+          <span class="title">{{ t.title }}</span><br>
+          <span class="meta">
+            {{ t.priority.value }}{% if t.project %} &middot; {{ t.project }}{% endif %}{% if t.due %} &middot; due {{ t.due | due }}{% if t.is_past_due %} (past due){% endif %}{% endif %}
+          </span>
+        </li>
+        {% endfor %}
+      </ol>
+    </section>
+  </div>
 
 </div>
 
-<footer>
-  Printed {{ b.for_date | date_long }} &middot; Tap the tag tomorrow for tomorrow&rsquo;s edition.
-</footer>
+{% if b.come_follow_me %}
+<div class="cfm">
+  <div class="label">Come Follow Me &middot; Week of {{ b.come_follow_me.week_label }}</div>
+  <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+  {% if b.come_follow_me.week_theme %}<div class="theme">{{ b.come_follow_me.week_theme }}</div>{% endif %}
+  {% if b.come_follow_me.today_reference %}
+  <div class="today"><span class="lbl">Today:</span> {{ b.come_follow_me.today_reference }}</div>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="bottom">
+
+  <div class="col col-left">
+    <div class="prayer-box">
+      <div class="label">Morning Prayer</div>
+      <div class="lines"></div>
+    </div>
+  </div>
+
+  <div class="col">
+    {% if b.quote %}
+    <div class="quote">
+      &ldquo;{{ b.quote.text }}&rdquo;
+      {% if b.quote.attribution %}<span class="attr">&mdash; {{ b.quote.attribution }}</span>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if b.joke %}
+    <div class="joke">
+      <div class="label">Joke of the Day</div>
+      <div class="text">{{ b.joke }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<footer>Printed {{ b.for_date | date_long }} &middot; A Record of Our Day</footer>
 
 </body>
 </html>

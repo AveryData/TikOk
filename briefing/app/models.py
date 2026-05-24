@@ -34,6 +34,27 @@ class CalendarEvent:
 
 
 @dataclass
+class UpcomingEvent:
+    """A calendar event in the next ~7 days (not today)."""
+    title: str
+    when: datetime
+    location: str | None = None
+
+    @property
+    def day_label(self) -> str:
+        return self.when.strftime("%a %-m/%-d")
+
+    @property
+    def time_label(self) -> str:
+        if self.when.hour == 0 and self.when.minute == 0:
+            return ""
+        # Compact: "6:30p" / "9a" — saves space in narrow columns.
+        if self.when.minute == 0:
+            return self.when.strftime("%-I%p").lower().replace("m", "")
+        return self.when.strftime("%-I:%M%p").lower().replace("m", "")
+
+
+@dataclass
 class Task:
     title: str
     priority: Priority = Priority.NONE
@@ -63,9 +84,77 @@ class Weather:
 
 
 @dataclass
+class YearProgress:
+    day_of_year: int
+    days_in_year: int
+
+    @property
+    def pct(self) -> float:
+        return self.day_of_year / self.days_in_year * 100
+
+    @property
+    def pct_label(self) -> str:
+        return f"{self.pct:.1f}%"
+
+
+@dataclass
+class ComeFollowMe:
+    week_label: str          # e.g. "May 18–24"
+    week_reference: str      # e.g. "Genesis 12–17"
+    week_theme: str | None   # e.g. "Abraham and Sarah"
+    today_reference: str | None  # e.g. "Genesis 12:1–8"
+
+
+@dataclass
+class Quote:
+    text: str
+    attribution: str | None = None
+
+
+@dataclass
+class TickerQuote:
+    symbol: str          # "SPY"
+    price: float         # latest close
+    as_of: date          # date of that close
+    pct_change_7d: float | None
+    pct_change_30d: float | None
+    pct_change_ytd: float | None
+
+    @staticmethod
+    def _fmt(pct: float | None) -> str:
+        if pct is None:
+            return "—"
+        sign = "+" if pct >= 0 else ""
+        return f"{sign}{pct:.1f}%"
+
+    @property
+    def label_7d(self) -> str: return self._fmt(self.pct_change_7d)
+    @property
+    def label_30d(self) -> str: return self._fmt(self.pct_change_30d)
+    @property
+    def label_ytd(self) -> str: return self._fmt(self.pct_change_ytd)
+
+
+@dataclass
+class Countdown:
+    label: str       # e.g. "Bear Lake Half Ironman"
+    target: date
+
+    def days_until(self, today: date) -> int:
+        return (self.target - today).days
+
+
+@dataclass
 class Briefing:
     for_date: date
     greeting: str
     weather: Weather
     events: list[CalendarEvent]
     tasks: list[Task]
+    upcoming: list[UpcomingEvent] = field(default_factory=list)
+    year_progress: YearProgress | None = None
+    come_follow_me: ComeFollowMe | None = None
+    joke: str | None = None
+    quote: Quote | None = None
+    ticker: TickerQuote | None = None
+    countdowns: list[Countdown] = field(default_factory=list)

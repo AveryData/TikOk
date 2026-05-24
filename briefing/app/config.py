@@ -29,6 +29,13 @@ class Settings(BaseSettings):
     # Optional auth on the endpoint itself
     briefing_shared_secret: str | None = None
 
+    # Ticker symbol to show (set to empty string to hide)
+    ticker_symbol: str = "SPY"
+
+    # Countdowns: comma-separated "Label@YYYY-MM-DD" pairs.
+    # e.g. "Bear Lake Brawl Half@2026-09-19,St. George Marathon@2026-10-03"
+    countdowns: str = "Bear Lake Brawl Half Ironman@2026-09-19"
+
 
 @lru_cache
 def get_settings() -> Settings:
