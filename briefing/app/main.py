@@ -13,6 +13,7 @@ from app.models import Briefing, Countdown, TickerQuote, Weather
 from app.render.pdf import render_html, render_pdf
 from app.render.sample import sample_briefing
 from app.sources.calendar import fetch_today_and_upcoming
+from app.sources.extras import prayer_group_for
 from app.sources.tasks import fetch_top_tasks
 from app.sources.ticker import fetch_ticker
 from app.sources.weather import fetch_weather
@@ -88,6 +89,10 @@ def _build_briefing(for_date: date | None = None) -> Briefing:
             logger.info("ticker fetched ok: %s", b.ticker.symbol)
         except Exception as exc:  # noqa: BLE001
             logger.warning("ticker fetch failed, using sample: %s", exc)
+
+    # Rotating prayer roll from env var (always overrides the sample).
+    if s.prayer_rotation:
+        b.prayer_group = prayer_group_for(today, s.prayer_rotation)
 
     # Countdowns from env var.
     if s.countdowns:

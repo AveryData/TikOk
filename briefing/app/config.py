@@ -49,6 +49,17 @@ class Settings(BaseSettings):
     # e.g. "Bear Lake Brawl Half@2026-09-19,St. George Marathon@2026-10-03"
     countdowns: str = "Bear Lake Brawl Half Ironman@2026-09-19"
 
+    # Rotating prayer roll. Groups separated by ';', names within each
+    # group separated by ','. Cycle by day-of-year so groups recur every
+    # len(groups) days. Override via PRAYER_ROTATION env var.
+    prayer_rotation: str = (
+        "Avery,Haley,Penny,Archer,Peach"
+        ";Finch,Mckoy,Bridger,Austin,Hyrum,Caleb,Sean,Jordan,Taft,Tyson,Kalani"
+        ";Dad,Mom,Elliott,Whitney,Graham"
+        ";Jerry,Melissa,Bryson,Breanna,Cameron,Caden,Sierra"
+        ";Austin,Pat,Hannah & Dillon,Brynn & Kobe,Steven,Dhawan"
+    )
+
 
 @lru_cache
 def get_settings() -> Settings:

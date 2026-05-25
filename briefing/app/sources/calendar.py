@@ -89,17 +89,17 @@ def fetch_today_and_upcoming(
     today: date,
     tz_name: str,
     calendar_ids: list[str],
-    upcoming_limit: int = 10,
-    upcoming_include_recurring: bool = False,
+    upcoming_limit: int = 15,
+    upcoming_include_recurring: bool = True,
 ) -> tuple[list[CalendarEvent], list[UpcomingEvent]]:
     """Returns (today_events, upcoming_events).
 
     today_events: everything scheduled for `today` across all calendars
-        (including recurring routine events like "Starting Work Day").
-    upcoming_events: next 7 days (excluding today). By default filters
-        OUT recurring events (which tend to be daily routine noise like
-        "Email" or "Prep Kids For Day") and caps at `upcoming_limit`.
-        Set upcoming_include_recurring=True to keep them.
+        (including recurring routine events).
+    upcoming_events: next 7 days (excluding today). Includes recurring
+        events by default — set upcoming_include_recurring=False to drop
+        them (was the default, but reverted because Avery's calendar is
+        mostly recurring blocks and the filter wiped whole days).
     """
     tz = ZoneInfo(tz_name)
     start_of_today = datetime.combine(today, time(0, 0), tzinfo=tz)

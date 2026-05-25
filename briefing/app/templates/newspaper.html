@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>A Record of Our Day — {{ b.for_date | date_short }}</title>
+<title>The Family Dispatch — {{ b.for_date | date_short }}</title>
 <style>
   @page {
     size: Letter;
@@ -202,60 +202,78 @@
   .tasks .past-due { color: #8a0000; }
   .tasks .past-due .title::after { content: " ★"; font-style: normal; color: #8a0000; }
 
-  /* ===== Come Follow Me ===== */
-  .cfm {
-    text-align: center;
-    padding: 3pt 0 4pt 0;
-    margin-bottom: 5pt;
-    border-bottom: 0.5pt solid #111;
-    border-top: 0.5pt solid #111;
-  }
-  .cfm .label {
-    font-size: 7pt;
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
-  }
-  .cfm .ref {
-    font-size: 10.5pt;
-    font-weight: 700;
-    margin: 1pt 0;
-  }
-  .cfm .theme { font-style: italic; font-size: 8.5pt; }
-  .cfm .today { font-size: 8.5pt; margin-top: 1pt; }
-  .cfm .today .lbl { text-transform: uppercase; letter-spacing: 0.1em; font-size: 7pt; }
-
-  /* ===== Bottom row: prayer + joke/quote ===== */
+  /* ===== Bottom row: combined prayer+CFM | quote+joke ===== */
   .bottom {
     display: flex;
     gap: 14pt;
   }
   .bottom .col { flex: 1; }
-  .bottom .col-left { flex: 0 0 220pt; }
+  .bottom .col-left { flex: 0 0 295pt; }
 
   .prayer-box {
     border: 0.75pt solid #111;
-    height: 105pt;
-    padding: 4pt 7pt;
+    height: 165pt;
+    padding: 4pt 8pt;
     display: flex;
     flex-direction: column;
   }
-  .prayer-box .label {
-    font-size: 7.5pt;
+  .prayer-box .cfm-strip {
+    border-bottom: 0.5pt solid #111;
+    padding-bottom: 3pt;
+    margin-bottom: 4pt;
+    text-align: center;
+  }
+  .prayer-box .cfm-strip .label {
+    font-size: 6.5pt;
     text-transform: uppercase;
-    letter-spacing: 0.2em;
-    border-bottom: 0.4pt solid #111;
-    padding-bottom: 2pt;
+    letter-spacing: 0.18em;
+    color: #555;
+  }
+  .prayer-box .cfm-strip .ref {
+    font-size: 9.5pt;
+    font-weight: 700;
+    margin-top: 1pt;
+  }
+  .prayer-box .cfm-strip .theme {
+    font-style: italic;
+    font-size: 8pt;
+    color: #444;
+  }
+  .prayer-box .pray-strip {
+    border-bottom: 0.4pt dashed #888;
+    padding-bottom: 3pt;
     margin-bottom: 4pt;
   }
-  .prayer-box .lines {
+  .prayer-box .pray-strip .label {
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #555;
+    text-align: center;
+    margin-bottom: 2pt;
+  }
+  .prayer-box .pray-strip .names {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 12pt;
+    row-gap: 1pt;
+    justify-content: center;
+    font-size: 9pt;
+  }
+  .prayer-box .pray-strip .names .n {
+    white-space: nowrap;
+  }
+  .prayer-box .prayer-label {
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #555;
+    text-align: center;
+    margin-bottom: 2pt;
+  }
+  .prayer-box .blank {
     flex: 1;
-    background-image: repeating-linear-gradient(
-      to bottom,
-      transparent 0,
-      transparent 17pt,
-      #ccc 17pt,
-      #ccc 17.4pt
-    );
+    /* intentionally empty — open space for handwritten prayer */
   }
 
   .quote {
@@ -303,7 +321,7 @@
 <body>
 
 <div class="masthead">
-  <div class="title">A Record of Our Day</div>
+  <div class="title">The Family Dispatch</div>
   <div class="subline">
     <span>Vol. I &middot; No. {{ b.for_date.toordinal() % 1000 }}</span>
     <span class="date">{{ b.for_date | date_long }}</span>
@@ -425,23 +443,29 @@
 
 </div>
 
-{% if b.come_follow_me %}
-<div class="cfm">
-  <div class="label">Come Follow Me &middot; Week of {{ b.come_follow_me.week_label }}</div>
-  <div class="ref">{{ b.come_follow_me.week_reference }}</div>
-  {% if b.come_follow_me.week_theme %}<div class="theme">{{ b.come_follow_me.week_theme }}</div>{% endif %}
-  {% if b.come_follow_me.today_reference %}
-  <div class="today"><span class="lbl">Today:</span> {{ b.come_follow_me.today_reference }}</div>
-  {% endif %}
-</div>
-{% endif %}
-
 <div class="bottom">
 
   <div class="col col-left">
     <div class="prayer-box">
-      <div class="label">Morning Prayer</div>
-      <div class="lines"></div>
+      {% if b.come_follow_me %}
+      <div class="cfm-strip">
+        <div class="label">Come Follow Me &middot; Week of {{ b.come_follow_me.week_label }}</div>
+        <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+        {% if b.come_follow_me.week_theme %}<div class="theme">{{ b.come_follow_me.week_theme }}</div>{% endif %}
+      </div>
+      {% endif %}
+
+      {% if b.prayer_group %}
+      <div class="pray-strip">
+        <div class="label">Pray for today</div>
+        <div class="names">
+          {% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="prayer-label">Morning Prayer</div>
+      <div class="blank"></div>
     </div>
   </div>
 
@@ -463,7 +487,7 @@
 
 </div>
 
-<footer>Printed {{ b.for_date | date_long }} &middot; A Record of Our Day</footer>
+<footer>Printed {{ b.for_date | date_long }} &middot; The Family Dispatch</footer>
 
 </body>
 </html>

@@ -158,3 +158,4 @@ class Briefing:
     quote: Quote | None = None
     ticker: TickerQuote | None = None
     countdowns: list[Countdown] = field(default_factory=list)
+    prayer_group: list[str] = field(default_factory=list)

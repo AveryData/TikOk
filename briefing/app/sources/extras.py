@@ -46,6 +46,22 @@ def year_progress_for(d: date) -> YearProgress:
     )
 
 
+def prayer_group_for(d: date, rotation: str) -> list[str]:
+    """Pick a name list from the rotation by day-of-year.
+
+    Format: groups separated by ';', names within group separated by ','.
+    Empty strings are skipped. Returns [] if rotation is empty.
+    """
+    groups = [
+        [n.strip() for n in g.split(",") if n.strip()]
+        for g in rotation.split(";")
+        if g.strip()
+    ]
+    if not groups:
+        return []
+    return groups[d.toordinal() % len(groups)]
+
+
 def come_follow_me_for(d: date) -> ComeFollowMe | None:
     iso = d.isoformat()
     for week in _cfm_raw().get("weeks", []):

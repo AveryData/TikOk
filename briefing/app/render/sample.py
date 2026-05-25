@@ -17,6 +17,7 @@ from app.models import (
 from app.sources.extras import (
     come_follow_me_for,
     joke_for,
+    prayer_group_for,
     quote_for,
     year_progress_for,
 )
@@ -121,6 +122,14 @@ def sample_briefing(today: date | None = None) -> Briefing:
         Countdown(label="Bear Lake Brawl Half Ironman", target=date(2026, 9, 19)),
     ]
 
+    sample_rotation = (
+        "Avery,Haley,Penny,Archer,Peach"
+        ";Finch,Mckoy,Bridger,Austin,Hyrum,Caleb,Sean,Jordan,Taft,Tyson,Kalani"
+        ";Dad,Mom,Elliott,Whitney,Graham"
+        ";Jerry,Melissa,Bryson,Breanna,Cameron,Caden,Sierra"
+        ";Austin,Pat,Hannah & Dillon,Brynn & Kobe,Steven,Dhawan"
+    )
+
     return Briefing(
         for_date=today,
         greeting="Good morning, Avery & family",
@@ -134,4 +143,5 @@ def sample_briefing(today: date | None = None) -> Briefing:
         quote=quote_for(today),
         ticker=ticker,
         countdowns=countdowns,
+        prayer_group=prayer_group_for(today, sample_rotation),
     )

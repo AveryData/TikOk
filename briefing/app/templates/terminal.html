@@ -199,7 +199,7 @@
 
 <div class="header">
   <span class="prompt">avery@home</span>:<span style="color:#9cc7ff">~/briefing</span>$ ./record-of-our-day --date={{ b.for_date.isoformat() }}
-  <div class="title">// A RECORD OF OUR DAY</div>
+  <div class="title">// THE DAILY COMMIT</div>
   <div class="meta">build {{ b.for_date.strftime("%Y%m%d") }} · op=avery · loc={{ b.weather.location }} · tz={{ b.for_date.strftime("%Z") or "MDT" }}</div>
 </div>
 
@@ -333,7 +333,7 @@ ________________________________________</span></pre>
 </div>
 
 <footer>
-  <span class="prompt">[eof]</span> printed {{ b.for_date.isoformat() }} {{ b.for_date.strftime("%H:%M") or "06:00" }} · exit 0 · a record of our day
+  <span class="prompt">[eof]</span> printed {{ b.for_date.isoformat() }} {{ b.for_date.strftime("%H:%M") or "06:00" }} · exit 0 · the daily commit
 </footer>
 
 </body>
