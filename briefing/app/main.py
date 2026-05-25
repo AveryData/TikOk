@@ -154,9 +154,26 @@ def briefing(
     style: Style | None = None,
     secret: str | None = Query(default=None),
     fmt: Literal["pdf", "html"] = "pdf",
+    for_date: str | None = Query(
+        default=None, alias="date",
+        description="YYYY-MM-DD to preview a specific day instead of today. "
+                    "Notion, Calendar, CFM, prayer rotation, jokes, quote, "
+                    "year-progress, and countdowns all respect this date. "
+                    "Weather and ticker still show real-now values since "
+                    "those don't make sense for future days.",
+    ),
 ) -> Response:
     _check_secret(secret)
-    b = _build_briefing()
+    target: date | None = None
+    if for_date:
+        try:
+            target = date.fromisoformat(for_date)
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid date '{for_date}'. Use YYYY-MM-DD.",
+            )
+    b = _build_briefing(for_date=target)
     settings = get_settings()
     # Precedence: explicit ?style= > pinned STYLE env var > day-of-week
     chosen: Style = style or settings.style or _style_for_day(b.for_date)  # type: ignore[assignment]
