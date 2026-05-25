@@ -188,36 +188,44 @@
   /* ===== Bottom row ===== */
   .bottom { display: flex; gap: 16pt; }
   .bottom .col { flex: 1; }
-  .bottom .col-left { flex: 0 0 220pt; }
+  .bottom .col-left { flex: 0 0 295pt; }
 
   .meditation-box {
     border: 0.75pt solid #2a1c0a;
-    height: 90pt;
-    padding: 4pt 8pt;
+    height: 135pt;
+    padding: 5pt 9pt;
     display: flex;
     flex-direction: column;
     background: rgba(255,255,255,0.35);
   }
+  .meditation-box .cfm-inset {
+    text-align: center;
+    border-bottom: 0.4pt solid #2a1c0a;
+    padding-bottom: 3pt;
+    margin-bottom: 4pt;
+  }
+  .meditation-box .cfm-inset .lbl { font-size: 6.5pt; font-variant: small-caps; letter-spacing: 0.22em; color: #5a3d12; font-style: italic; }
+  .meditation-box .cfm-inset .ref { font-size: 9.5pt; font-weight: 700; margin-top: 1pt; }
+  .meditation-box .pray-inset {
+    text-align: center;
+    border-bottom: 0.3pt dotted #8b6c3f;
+    padding-bottom: 3pt;
+    margin-bottom: 4pt;
+  }
+  .meditation-box .pray-inset .lbl { font-size: 6.5pt; font-variant: small-caps; letter-spacing: 0.22em; color: #5a3d12; font-style: italic; margin-bottom: 1pt; }
+  .meditation-box .pray-inset .names { font-size: 9pt; font-style: italic; }
+  .meditation-box .pray-inset .names .n { white-space: nowrap; margin: 0 3pt; }
   .meditation-box .label {
-    font-size: 7.5pt;
+    font-size: 7pt;
     font-variant: small-caps;
     letter-spacing: 0.22em;
-    border-bottom: 0.4pt solid #2a1c0a;
-    padding-bottom: 1pt;
-    margin-bottom: 4pt;
     color: #5a3d12;
     text-align: center;
     font-style: italic;
+    margin-bottom: 2pt;
   }
   .meditation-box .lines {
     flex: 1;
-    background-image: repeating-linear-gradient(
-      to bottom,
-      transparent 0,
-      transparent 17pt,
-      #c4a978 17pt,
-      #c4a978 17.4pt
-    );
   }
 
   .aphorism {
@@ -368,21 +376,22 @@
 
 </div>
 
-{% if b.come_follow_me %}
-<div class="cfm">
-  <div class="label">— Notes from the Scriptures —</div>
-  <div class="ref">{{ b.come_follow_me.week_reference }}</div>
-  {% if b.come_follow_me.week_theme %}<div class="theme">{{ b.come_follow_me.week_theme }}</div>{% endif %}
-  {% if b.come_follow_me.today_reference %}
-  <div class="today">For this day: <strong>{{ b.come_follow_me.today_reference }}</strong></div>
-  {% endif %}
-</div>
-{% endif %}
-
 <div class="bottom">
 
   <div class="col col-left">
     <div class="meditation-box">
+      {% if b.come_follow_me %}
+      <div class="cfm-inset">
+        <div class="lbl">— Notes from the Scriptures · Week of {{ b.come_follow_me.week_label }} —</div>
+        <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+      </div>
+      {% endif %}
+      {% if b.prayer_group %}
+      <div class="pray-inset">
+        <div class="lbl">— Subjects of meditation this day —</div>
+        <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+      </div>
+      {% endif %}
       <div class="label">Daily Meditation</div>
       <div class="lines"></div>
     </div>

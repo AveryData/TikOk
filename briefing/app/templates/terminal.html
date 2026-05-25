@@ -152,7 +152,7 @@
     margin-top: 6pt;
   }
   .bottom .col { flex: 1; }
-  .bottom .col-left { flex: 0 0 220pt; }
+  .bottom .col-left { flex: 0 0 295pt; }
 
   .prayer {
     font-size: 8pt;
@@ -160,15 +160,18 @@
   .prayer .title { color: #2d5e2d; font-weight: 700; }
   .prayer pre.box {
     border: 0.6pt solid #0a0a0a;
-    padding: 6pt 8pt;
-    height: 90pt;
-    line-height: 18pt;
+    padding: 5pt 8pt;
+    height: 130pt;
+    line-height: 1.35;
     background: rgba(255,255,255,0.5);
+    margin: 0;
+    overflow: hidden;
+    white-space: pre-wrap;
+    font-family: inherit;
   }
-  .prayer pre.box .underscore {
-    color: #aaa;
-    letter-spacing: 0.5pt;
-  }
+  .prayer .stdin-line { color: #2d5e2d; }
+  .prayer .stdin-line .tag { font-weight: 700; }
+  .prayer .blank { /* intentionally empty space */ }
 
   .quote {
     border-top: 0.6pt solid #0a0a0a;
@@ -291,25 +294,15 @@
 
 </div>
 
-{% if b.come_follow_me %}
-<div class="cfm">
-  <span class="prompt">$ cat scripture/ot_2026/week_{{ b.come_follow_me.week_label | replace(' ', '_') | replace('–','-') }}.txt</span>
-  <div class="ref">&gt; {{ b.come_follow_me.week_reference }}</div>
-  {% if b.come_follow_me.week_theme %}<div class="out">theme: {{ b.come_follow_me.week_theme }}</div>{% endif %}
-  {% if b.come_follow_me.today_reference %}<div class="out">today: {{ b.come_follow_me.today_reference }}</div>{% endif %}
-</div>
-{% endif %}
-
 <div class="bottom">
 
   <div class="col col-left">
     <div class="prayer">
       <div class="title">// PRAYER.input · write-only buffer</div>
-<pre class="box"><span class="underscore">________________________________________
-________________________________________
-________________________________________
-________________________________________
-________________________________________</span></pre>
+<pre class="box">{% if b.come_follow_me %}<span class="stdin-line"><span class="tag">[scripture]</span> week={{ b.come_follow_me.week_label }} :: {{ b.come_follow_me.week_reference }}</span>
+{% endif %}{% if b.prayer_group %}<span class="stdin-line"><span class="tag">[pray for]</span> {% for n in b.prayer_group %}{{ n }}{% if not loop.last %} · {% endif %}{% endfor %}</span>
+{% endif %}<span class="stdin-line"><span class="tag">[stdin]</span>$ <span style="color:#999">_</span></span>
+<span class="blank"> </span></pre>
     </div>
   </div>
 

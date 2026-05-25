@@ -180,12 +180,29 @@
 
   .prayer-box {
     border: 0.75pt solid #1c160b;
-    height: 90pt;
-    padding: 4pt 7pt;
+    height: 135pt;
+    padding: 5pt 9pt;
     display: flex;
     flex-direction: column;
     background: rgba(255,255,255,0.4);
   }
+  .prayer-box .cfm-inset {
+    text-align: center;
+    border-bottom: 0.4pt solid #1c160b;
+    padding-bottom: 3pt;
+    margin-bottom: 4pt;
+  }
+  .prayer-box .cfm-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.22em; color: #7a5d2e; }
+  .prayer-box .cfm-inset .ref { font-size: 9.5pt; font-weight: 700; margin-top: 1pt; }
+  .prayer-box .pray-inset {
+    border-bottom: 0.3pt dotted #7a5d2e;
+    padding-bottom: 3pt;
+    margin-bottom: 4pt;
+    text-align: center;
+  }
+  .prayer-box .pray-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.22em; color: #7a5d2e; margin-bottom: 1pt; }
+  .prayer-box .pray-inset .names { font-size: 9pt; font-style: italic; }
+  .prayer-box .pray-inset .names .n { white-space: nowrap; margin: 0 3pt; }
   .prayer-box .label {
     font-size: 7.5pt;
     text-transform: uppercase;
@@ -198,13 +215,6 @@
   }
   .prayer-box .lines {
     flex: 1;
-    background-image: repeating-linear-gradient(
-      to bottom,
-      transparent 0,
-      transparent 17pt,
-      #c8b894 17pt,
-      #c8b894 17.4pt
-    );
   }
 
   .quote {
@@ -350,21 +360,24 @@
 
 </div>
 
-{% if b.come_follow_me %}
-<div class="cfm">
-  <div class="label">❦ &nbsp; From the Holy Writings This Week &nbsp; ❦</div>
-  <div class="ref">{{ b.come_follow_me.week_reference }}</div>
-  {% if b.come_follow_me.week_theme %}<div class="theme">{{ b.come_follow_me.week_theme }}</div>{% endif %}
-  {% if b.come_follow_me.today_reference %}
-  <div class="today">For this day: <strong>{{ b.come_follow_me.today_reference }}</strong></div>
-  {% endif %}
-</div>
-{% endif %}
-
 <div class="bottom">
 
   <div class="col col-left">
     <div class="prayer-box">
+      {% if b.come_follow_me %}
+      <div class="cfm-inset">
+        <div class="lbl">❦ From the Holy Writings · Week of {{ b.come_follow_me.week_label }} ❦</div>
+        <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+      </div>
+      {% endif %}
+
+      {% if b.prayer_group %}
+      <div class="pray-inset">
+        <div class="lbl">Names for which to pray this day</div>
+        <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+      </div>
+      {% endif %}
+
       <div class="label">A Prayer of Supplication</div>
       <div class="lines"></div>
     </div>

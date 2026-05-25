@@ -230,11 +230,11 @@
   /* Bottom: thought-cloud prayer + wisdom + zinger */
   .bottom { display: flex; gap: 8pt; }
   .bottom .col { flex: 1; }
-  .bottom .col-left { flex: 0 0 220pt; }
+  .bottom .col-left { flex: 0 0 295pt; }
 
   .thought-cloud {
     border: 1.5pt solid #0a0a0a;
-    height: 95pt;
+    height: 135pt;
     padding: 5pt 8pt;
     display: flex;
     flex-direction: column;
@@ -253,11 +253,39 @@
     font-weight: 900;
     border-bottom: 1.5pt solid #0a0a0a;
   }
+  .thought-cloud .cfm-inset {
+    text-align: center;
+    border-bottom: 1pt solid #0a0a0a;
+    padding-bottom: 3pt;
+    margin-bottom: 4pt;
+  }
+  .thought-cloud .cfm-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.18em; color: #1d5cb8; font-weight: 900; }
+  .thought-cloud .cfm-inset .ref { font-size: 9.5pt; font-weight: 900; margin-top: 1pt; }
+  .thought-cloud .pray-inset {
+    text-align: center;
+    border-bottom: 1pt solid #0a0a0a;
+    padding-bottom: 3pt;
+    margin-bottom: 4pt;
+    background: #ffce00;
+    margin-left: -8pt;
+    margin-right: -8pt;
+    padding-left: 8pt;
+    padding-right: 8pt;
+  }
+  .thought-cloud .pray-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.18em; color: #e62429; font-weight: 900; margin-bottom: 1pt; }
+  .thought-cloud .pray-inset .names { font-size: 8.5pt; font-weight: 700; }
+  .thought-cloud .pray-inset .names .n { white-space: nowrap; margin: 0 3pt; }
+  .thought-cloud .sub-label {
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #e62429;
+    text-align: center;
+    font-weight: 900;
+    margin-bottom: 2pt;
+  }
   .thought-cloud .lines {
     flex: 1;
-    background-image: repeating-linear-gradient(
-      to bottom, transparent 0, transparent 17pt,
-      #888 17pt, #888 17.4pt);
   }
 
   .wisdom {
@@ -398,20 +426,24 @@
 
 </div>
 
-{% if b.come_follow_me %}
-<div class="codex">
-  <div class="label">★ This Week's Origin Story ★</div>
-  <div class="ref">{{ b.come_follow_me.week_reference }}</div>
-  {% if b.come_follow_me.week_theme %}<div class="theme">{{ b.come_follow_me.week_theme }}</div>{% endif %}
-  {% if b.come_follow_me.today_reference %}<div class="today">Today's chapter: <strong>{{ b.come_follow_me.today_reference }}</strong></div>{% endif %}
-</div>
-{% endif %}
-
 <div class="bottom">
 
   <div class="col col-left">
     <div class="thought-cloud">
       <div class="label">★ Peter's Prayer Bubble ★</div>
+      {% if b.come_follow_me %}
+      <div class="cfm-inset">
+        <div class="lbl">★ Origin Story · Week of {{ b.come_follow_me.week_label }} ★</div>
+        <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+      </div>
+      {% endif %}
+      {% if b.prayer_group %}
+      <div class="pray-inset">
+        <div class="lbl">★ Friendly Neighborhood Watch ★</div>
+        <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+      </div>
+      {% endif %}
+      <div class="sub-label">★ Today's web of words ★</div>
       <div class="lines"></div>
     </div>
   </div>

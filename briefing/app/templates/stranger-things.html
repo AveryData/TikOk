@@ -217,12 +217,12 @@
   /* Bottom row */
   .bottom { display: flex; gap: 8pt; }
   .bottom .col { flex: 1; }
-  .bottom .col-left { flex: 0 0 220pt; }
+  .bottom .col-left { flex: 0 0 295pt; }
 
   .walkie-box {
     border: 1pt solid #0a0a14;
-    height: 95pt;
-    padding: 4pt 7pt;
+    height: 135pt;
+    padding: 4pt 8pt;
     display: flex;
     flex-direction: column;
     background: rgba(255,255,255,0.5);
@@ -235,14 +235,37 @@
     color: #b80000;
     text-align: center;
     padding: 2pt 0;
-    margin: -4pt -7pt 4pt -7pt;
+    margin: -4pt -8pt 4pt -8pt;
     font-weight: 700;
+  }
+  .walkie-box .cfm-inset {
+    text-align: center;
+    border-bottom: 0.5pt dashed #b80000;
+    padding-bottom: 3pt;
+    margin-bottom: 4pt;
+  }
+  .walkie-box .cfm-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.2em; color: #b80000; font-weight: 700; }
+  .walkie-box .cfm-inset .ref { font-size: 9.5pt; font-weight: 700; margin-top: 1pt; color: #0a0a14; }
+  .walkie-box .pray-inset {
+    text-align: center;
+    border-bottom: 0.5pt dashed #b80000;
+    padding-bottom: 3pt;
+    margin-bottom: 4pt;
+  }
+  .walkie-box .pray-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.2em; color: #b80000; font-weight: 700; margin-bottom: 1pt; }
+  .walkie-box .pray-inset .names { font-size: 8.5pt; font-weight: 700; color: #0a0a14; }
+  .walkie-box .pray-inset .names .n { white-space: nowrap; margin: 0 3pt; }
+  .walkie-box .sub-label {
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #b80000;
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 2pt;
   }
   .walkie-box .lines {
     flex: 1;
-    background-image: repeating-linear-gradient(
-      to bottom, transparent 0, transparent 17pt,
-      #888 17pt, #888 17.4pt);
   }
 
   .wisdom {
@@ -373,20 +396,24 @@
 
 </div>
 
-{% if b.come_follow_me %}
-<div class="codex">
-  <div class="label">▲ This Week's Codex ▲</div>
-  <div class="ref">{{ b.come_follow_me.week_reference }}</div>
-  {% if b.come_follow_me.week_theme %}<div class="theme">{{ b.come_follow_me.week_theme }}</div>{% endif %}
-  {% if b.come_follow_me.today_reference %}<div class="today">Tonight's reading: <strong>{{ b.come_follow_me.today_reference }}</strong></div>{% endif %}
-</div>
-{% endif %}
-
 <div class="bottom">
 
   <div class="col col-left">
     <div class="walkie-box">
       <div class="label">▲ Outgoing Transmission · Channel 11</div>
+      {% if b.come_follow_me %}
+      <div class="cfm-inset">
+        <div class="lbl">▲ This Week's Codex · {{ b.come_follow_me.week_label }} ▲</div>
+        <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+      </div>
+      {% endif %}
+      {% if b.prayer_group %}
+      <div class="pray-inset">
+        <div class="lbl">▲ Tonight's Party Roster ▲</div>
+        <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+      </div>
+      {% endif %}
+      <div class="sub-label">▲ Message to send ▲</div>
       <div class="lines"></div>
     </div>
   </div>
