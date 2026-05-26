@@ -160,10 +160,26 @@ def fetch_today_and_upcoming(
 
     today_events.sort(key=lambda e: (not e.all_day, e.start or start_of_today))
     upcoming.sort(key=lambda u: u.when)
-    upcoming = upcoming[:upcoming_limit]
+
+    # Deduplicate upcoming by exact title (case-insensitive). Avery's calendar
+    # has many routines that recur daily (Prep Kids For Day, Starting Work
+    # Day, Email, etc.). Showing each one Mon-Fri bloats the section and
+    # pushes the layout off one page. First occurrence wins so the earliest
+    # instance of each recurring event still shows up.
+    seen: set[str] = set()
+    deduped: list[UpcomingEvent] = []
+    duplicates_dropped = 0
+    for u in upcoming:
+        key = u.title.strip().lower()
+        if key in seen:
+            duplicates_dropped += 1
+            continue
+        seen.add(key)
+        deduped.append(u)
+    upcoming = deduped[:upcoming_limit]
 
     logger.info(
-        "calendar: %d events today, %d upcoming (across %d calendar(s), cap=%d)",
-        len(today_events), len(upcoming), len(calendar_ids), upcoming_limit,
+        "calendar: %d events today, %d upcoming (across %d cal(s), cap=%d, deduped=%d)",
+        len(today_events), len(upcoming), len(calendar_ids), upcoming_limit, duplicates_dropped,
     )
     return today_events, upcoming
