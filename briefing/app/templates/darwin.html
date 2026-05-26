@@ -283,9 +283,7 @@
 
 <p class="field-entry">
   <span class="vmark">i.</span>
-  The day broke partly clouded over {{ b.weather.location.split(',')[0] }}. Upon arising, the air without recorded a temperature of <strong>{{ b.weather.current_f }}°F</strong>; it is foretold to grow warm unto <strong>{{ b.weather.high_f }}°F</strong>, and to fall again to <strong>{{ b.weather.low_f }}°F</strong> by night. The chance of rain upon the land is reckoned at <strong>{{ b.weather.precip_chance_today }}%</strong>. The sun did first appear at {{ b.weather.sunrise }}, and shall withdraw at {{ b.weather.sunset }}.
-  <span class="vmark">ii.</span>
-  {{ b.greeting }}.
+  At {{ b.weather.location.split(',')[0] }}: <strong>{{ b.weather.current_f }}°F</strong> at dawn, foretold high <strong>{{ b.weather.high_f }}°</strong> &middot; low <strong>{{ b.weather.low_f }}°</strong> &middot; rain <strong>{{ b.weather.precip_chance_today }}%</strong> &middot; sun {{ b.weather.sunrise }}–{{ b.weather.sunset }}. &nbsp; <em>{{ b.greeting }}.</em>
 </p>
 
 {% if b.ticker or b.countdowns %}
