@@ -173,15 +173,11 @@
   .cfm .theme { font-style: italic; font-size: 8.5pt; color: #4a3a16; }
   .cfm .today { font-size: 8.5pt; margin-top: 1pt; }
 
-  /* ===== Bottom row ===== */
-  .bottom { display: flex; gap: 16pt; }
-  .bottom .col { flex: 1; }
-  .bottom .col-left { flex: 0 0 220pt; }
-
   .prayer-box {
     border: 0.75pt solid #1c160b;
-    height: 135pt;
-    padding: 5pt 9pt;
+    height: 95pt;
+    padding: 5pt 11pt;
+    margin-bottom: 6pt;
     display: flex;
     flex-direction: column;
     background: rgba(255,255,255,0.4);
@@ -306,6 +302,24 @@
 </div>
 {% endif %}
 
+{# Prayer block above the body-grid — full width #}
+<div class="prayer-box">
+  {% if b.come_follow_me %}
+  <div class="cfm-inset">
+    <div class="lbl">❦ From the Holy Writings · Week of {{ b.come_follow_me.week_label }} ❦</div>
+    <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+  </div>
+  {% endif %}
+  {% if b.prayer_group %}
+  <div class="pray-inset">
+    <div class="lbl">Names for which to pray this day</div>
+    <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+  </div>
+  {% endif %}
+  <div class="label">A Prayer of Supplication</div>
+  <div class="lines"></div>
+</div>
+
 <div class="body-grid">
 
   <div class="col col-left">
@@ -360,46 +374,6 @@
 
 </div>
 
-<div class="bottom">
-
-  <div class="col col-left">
-    <div class="prayer-box">
-      {% if b.come_follow_me %}
-      <div class="cfm-inset">
-        <div class="lbl">❦ From the Holy Writings · Week of {{ b.come_follow_me.week_label }} ❦</div>
-        <div class="ref">{{ b.come_follow_me.week_reference }}</div>
-      </div>
-      {% endif %}
-
-      {% if b.prayer_group %}
-      <div class="pray-inset">
-        <div class="lbl">Names for which to pray this day</div>
-        <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
-      </div>
-      {% endif %}
-
-      <div class="label">A Prayer of Supplication</div>
-      <div class="lines"></div>
-    </div>
-  </div>
-
-  <div class="col">
-    {% if b.quote %}
-    <div class="quote">
-      <span class="open">“</span>{{ b.quote.text }}<span class="close">”</span>
-      {% if b.quote.attribution %}<span class="attr">— {{ b.quote.attribution }}</span>{% endif %}
-    </div>
-    {% endif %}
-
-    {% if b.joke %}
-    <div class="joke">
-      <div class="label">A Word of Mirth</div>
-      <div class="text">{{ b.joke }}</div>
-    </div>
-    {% endif %}
-  </div>
-
-</div>
 
 <footer>
   <span class="selah">Selah.</span> &nbsp; Inscribed upon {{ b.for_date | scripture_date }}.

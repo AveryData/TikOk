@@ -227,15 +227,11 @@
   .codex .theme { font-style: italic; font-size: 8.5pt; font-weight: 700; }
   .codex .today { font-size: 8.5pt; margin-top: 1pt; font-weight: 700; }
 
-  /* Bottom: thought-cloud prayer + wisdom + zinger */
-  .bottom { display: flex; gap: 8pt; }
-  .bottom .col { flex: 1; }
-  .bottom .col-left { flex: 0 0 295pt; }
-
   .thought-cloud {
     border: 1.5pt solid #0a0a0a;
-    height: 135pt;
-    padding: 5pt 8pt;
+    height: 95pt;
+    padding: 5pt 10pt;
+    margin-bottom: 6pt;
     display: flex;
     flex-direction: column;
     background: #fff;
@@ -373,6 +369,25 @@
 </div>
 {% endif %}
 
+{# Prayer bubble above body-grid — full width #}
+<div class="thought-cloud">
+  <div class="label">★ Peter's Prayer Bubble ★</div>
+  {% if b.come_follow_me %}
+  <div class="cfm-inset">
+    <div class="lbl">★ Origin Story · Week of {{ b.come_follow_me.week_label }} ★</div>
+    <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+  </div>
+  {% endif %}
+  {% if b.prayer_group %}
+  <div class="pray-inset">
+    <div class="lbl">★ Friendly Neighborhood Watch ★</div>
+    <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+  </div>
+  {% endif %}
+  <div class="sub-label">★ Today's web of words ★</div>
+  <div class="lines"></div>
+</div>
+
 <div class="body-grid">
 
   <div class="col">
@@ -426,44 +441,6 @@
 
 </div>
 
-<div class="bottom">
-
-  <div class="col col-left">
-    <div class="thought-cloud">
-      <div class="label">★ Peter's Prayer Bubble ★</div>
-      {% if b.come_follow_me %}
-      <div class="cfm-inset">
-        <div class="lbl">★ Origin Story · Week of {{ b.come_follow_me.week_label }} ★</div>
-        <div class="ref">{{ b.come_follow_me.week_reference }}</div>
-      </div>
-      {% endif %}
-      {% if b.prayer_group %}
-      <div class="pray-inset">
-        <div class="lbl">★ Friendly Neighborhood Watch ★</div>
-        <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
-      </div>
-      {% endif %}
-      <div class="sub-label">★ Today's web of words ★</div>
-      <div class="lines"></div>
-    </div>
-  </div>
-
-  <div class="col">
-    {% if b.quote %}
-    <div class="wisdom">
-      “{{ b.quote.text }}”
-      {% if b.quote.attribution %}<span class="attr">— {{ b.quote.attribution }}</span>{% endif %}
-    </div>
-    {% endif %}
-    {% if b.joke %}
-    <div class="zinger">
-      <div class="label">★ ZAP! Comic Strip Zinger ★</div>
-      <div class="text">{{ b.joke }}</div>
-    </div>
-    {% endif %}
-  </div>
-
-</div>
 
 <footer>
   ★ With Great Power Comes Great Briefing · {{ b.for_date | date_short }} ★

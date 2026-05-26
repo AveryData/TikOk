@@ -214,15 +214,11 @@
   .codex .theme { font-style: italic; font-size: 8.5pt; }
   .codex .today { font-size: 8.5pt; margin-top: 1pt; }
 
-  /* Bottom row */
-  .bottom { display: flex; gap: 8pt; }
-  .bottom .col { flex: 1; }
-  .bottom .col-left { flex: 0 0 295pt; }
-
   .walkie-box {
     border: 1pt solid #0a0a14;
-    height: 135pt;
-    padding: 4pt 8pt;
+    height: 95pt;
+    padding: 4pt 10pt;
+    margin-bottom: 6pt;
     display: flex;
     flex-direction: column;
     background: rgba(255,255,255,0.5);
@@ -342,6 +338,25 @@
 </div>
 {% endif %}
 
+{# Outgoing transmission above body-grid — full width #}
+<div class="walkie-box">
+  <div class="label">▲ Outgoing Transmission · Channel 11</div>
+  {% if b.come_follow_me %}
+  <div class="cfm-inset">
+    <div class="lbl">▲ This Week's Codex · {{ b.come_follow_me.week_label }} ▲</div>
+    <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+  </div>
+  {% endif %}
+  {% if b.prayer_group %}
+  <div class="pray-inset">
+    <div class="lbl">▲ Tonight's Party Roster ▲</div>
+    <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+  </div>
+  {% endif %}
+  <div class="sub-label">▲ Message to send ▲</div>
+  <div class="lines"></div>
+</div>
+
 <div class="body-grid">
 
   <div class="col">
@@ -396,44 +411,6 @@
 
 </div>
 
-<div class="bottom">
-
-  <div class="col col-left">
-    <div class="walkie-box">
-      <div class="label">▲ Outgoing Transmission · Channel 11</div>
-      {% if b.come_follow_me %}
-      <div class="cfm-inset">
-        <div class="lbl">▲ This Week's Codex · {{ b.come_follow_me.week_label }} ▲</div>
-        <div class="ref">{{ b.come_follow_me.week_reference }}</div>
-      </div>
-      {% endif %}
-      {% if b.prayer_group %}
-      <div class="pray-inset">
-        <div class="lbl">▲ Tonight's Party Roster ▲</div>
-        <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
-      </div>
-      {% endif %}
-      <div class="sub-label">▲ Message to send ▲</div>
-      <div class="lines"></div>
-    </div>
-  </div>
-
-  <div class="col">
-    {% if b.quote %}
-    <div class="wisdom">
-      “{{ b.quote.text }}”
-      {% if b.quote.attribution %}<span class="attr">— {{ b.quote.attribution }}</span>{% endif %}
-    </div>
-    {% endif %}
-    {% if b.joke %}
-    <div class="oneliner">
-      <div class="label">▲ Dustin's One-Liner</div>
-      <div class="text">{{ b.joke }}</div>
-    </div>
-    {% endif %}
-  </div>
-
-</div>
 
 <footer>
   ▲ End of Bulletin · {{ b.for_date | date_short }} ▲

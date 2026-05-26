@@ -237,15 +237,11 @@
   .lore .theme { font-style: italic; font-size: 8.5pt; font-weight: 700; }
   .lore .today { font-size: 8.5pt; margin-top: 1pt; font-weight: 700; }
 
-  /* Bottom: trainer's inner thought + master's quote + joke card */
-  .bottom { display: flex; gap: 7pt; }
-  .bottom .col { flex: 1; }
-  .bottom .col-left { flex: 0 0 295pt; }
-
   .thought-box {
     border: 1.5pt solid #0a0a0a;
-    height: 135pt;
-    padding: 5pt 8pt;
+    height: 95pt;
+    padding: 5pt 10pt;
+    margin-bottom: 6pt;
     display: flex;
     flex-direction: column;
     background: #fff;
@@ -386,6 +382,25 @@
   {% endif %}
 </div>
 
+{# Trainer's inner monologue above body-grid — full width #}
+<div class="thought-box">
+  <div class="label">★ Trainer's Inner Monologue ★</div>
+  {% if b.come_follow_me %}
+  <div class="cfm-inset">
+    <div class="lbl">★ Ancient Lore · {{ b.come_follow_me.week_label }} ★</div>
+    <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+  </div>
+  {% endif %}
+  {% if b.prayer_group %}
+  <div class="pray-inset">
+    <div class="lbl">★ Today's Party Roster ★</div>
+    <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+  </div>
+  {% endif %}
+  <div class="sub-label">★ Trainer's notes ★</div>
+  <div class="lines"></div>
+</div>
+
 <div class="body-grid">
 
   <div class="col">
@@ -442,44 +457,6 @@
 
 </div>
 
-<div class="bottom">
-
-  <div class="col col-left">
-    <div class="thought-box">
-      <div class="label">★ Trainer's Inner Monologue ★</div>
-      {% if b.come_follow_me %}
-      <div class="cfm-inset">
-        <div class="lbl">★ Ancient Lore · {{ b.come_follow_me.week_label }} ★</div>
-        <div class="ref">{{ b.come_follow_me.week_reference }}</div>
-      </div>
-      {% endif %}
-      {% if b.prayer_group %}
-      <div class="pray-inset">
-        <div class="lbl">★ Today's Party Roster ★</div>
-        <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
-      </div>
-      {% endif %}
-      <div class="sub-label">★ Trainer's notes ★</div>
-      <div class="lines"></div>
-    </div>
-  </div>
-
-  <div class="col">
-    {% if b.quote %}
-    <div class="professor">
-      “{{ b.quote.text }}”
-      {% if b.quote.attribution %}<span class="attr">— Prof. {{ b.quote.attribution.split()[-1] if b.quote.attribution else 'Oak' }}</span>{% endif %}
-    </div>
-    {% endif %}
-    {% if b.joke %}
-    <div class="tcg">
-      <div class="label">★ TCG · Bonus Card ★</div>
-      <div class="text">{{ b.joke }}</div>
-    </div>
-    {% endif %}
-  </div>
-
-</div>
 
 <footer>
   ★ Gotta Catch 'Em All · {{ b.for_date | date_short }} ★

@@ -204,17 +204,11 @@
   .tasks .past-due .title::after { content: " ★"; font-style: normal; color: #8a0000; }
 
   /* ===== Bottom row: combined prayer+CFM | quote+joke ===== */
-  .bottom {
-    display: flex;
-    gap: 14pt;
-  }
-  .bottom .col { flex: 1; }
-  .bottom .col-left { flex: 0 0 295pt; }
-
   .prayer-box {
     border: 0.75pt solid #111;
-    height: 135pt;
-    padding: 4pt 8pt;
+    height: 95pt;
+    padding: 4pt 10pt;
+    margin-bottom: 6pt;
     display: flex;
     flex-direction: column;
   }
@@ -391,6 +385,29 @@
 </div>
 {% endif %}
 
+{# Prayer block above the body-grid — full width, holds CFM ref + names + blank writing area #}
+<div class="prayer-box">
+  {% if b.come_follow_me %}
+  <div class="cfm-strip">
+    <div class="label">Come Follow Me &middot; Week of {{ b.come_follow_me.week_label }}</div>
+    <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+    {% if b.come_follow_me.week_theme %}<div class="theme">{{ b.come_follow_me.week_theme }}</div>{% endif %}
+  </div>
+  {% endif %}
+
+  {% if b.prayer_group %}
+  <div class="pray-strip">
+    <div class="label">Pray for today</div>
+    <div class="names">
+      {% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="prayer-label">Morning Prayer</div>
+  <div class="blank"></div>
+</div>
+
 <div class="body-grid">
 
   <div class="col col-left">
@@ -440,50 +457,6 @@
         {% endfor %}
       </ol>
     </section>
-  </div>
-
-</div>
-
-<div class="bottom">
-
-  <div class="col col-left">
-    <div class="prayer-box">
-      {% if b.come_follow_me %}
-      <div class="cfm-strip">
-        <div class="label">Come Follow Me &middot; Week of {{ b.come_follow_me.week_label }}</div>
-        <div class="ref">{{ b.come_follow_me.week_reference }}</div>
-        {% if b.come_follow_me.week_theme %}<div class="theme">{{ b.come_follow_me.week_theme }}</div>{% endif %}
-      </div>
-      {% endif %}
-
-      {% if b.prayer_group %}
-      <div class="pray-strip">
-        <div class="label">Pray for today</div>
-        <div class="names">
-          {% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% endfor %}
-        </div>
-      </div>
-      {% endif %}
-
-      <div class="prayer-label">Morning Prayer</div>
-      <div class="blank"></div>
-    </div>
-  </div>
-
-  <div class="col">
-    {% if b.quote %}
-    <div class="quote">
-      &ldquo;{{ b.quote.text }}&rdquo;
-      {% if b.quote.attribution %}<span class="attr">&mdash; {{ b.quote.attribution }}</span>{% endif %}
-    </div>
-    {% endif %}
-
-    {% if b.joke %}
-    <div class="joke">
-      <div class="label">Joke of the Day</div>
-      <div class="text">{{ b.joke }}</div>
-    </div>
-    {% endif %}
   </div>
 
 </div>

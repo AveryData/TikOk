@@ -133,10 +133,15 @@ def fetch_today_and_upcoming(
             title = item.get("summary", "(no title)").strip()
             location = item.get("location") or item.get("conferenceUrl")
             if location and location.startswith("http"):
-                # Trim long Notion/Meet URLs to just the host for display.
+                # URLs collapse to short labels.
                 location = "Zoom" if "zoom" in location else (
                     "Meet" if "meet.google" in location else None
                 )
+            elif location and "," in location:
+                # Physical addresses (anything with a comma) are noise on a
+                # printed page — drop entirely. Short single-word labels like
+                # "Home Office" or "Sego Lily" still pass through.
+                location = None
 
             if start_dt < end_of_today:
                 today_events.append(CalendarEvent(

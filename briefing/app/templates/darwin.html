@@ -185,15 +185,11 @@
   .cfm .theme { font-style: italic; font-size: 8.5pt; color: #5a3d12; }
   .cfm .today { font-size: 8.5pt; margin-top: 1pt; }
 
-  /* ===== Bottom row ===== */
-  .bottom { display: flex; gap: 16pt; }
-  .bottom .col { flex: 1; }
-  .bottom .col-left { flex: 0 0 295pt; }
-
   .meditation-box {
     border: 0.75pt solid #2a1c0a;
-    height: 135pt;
-    padding: 5pt 9pt;
+    height: 95pt;
+    padding: 5pt 11pt;
+    margin-bottom: 6pt;
     display: flex;
     flex-direction: column;
     background: rgba(255,255,255,0.35);
@@ -320,6 +316,24 @@
 </div>
 {% endif %}
 
+{# Meditation block above body-grid, full width #}
+<div class="meditation-box">
+  {% if b.come_follow_me %}
+  <div class="cfm-inset">
+    <div class="lbl">— Notes from the Scriptures · Week of {{ b.come_follow_me.week_label }} —</div>
+    <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+  </div>
+  {% endif %}
+  {% if b.prayer_group %}
+  <div class="pray-inset">
+    <div class="lbl">— Subjects of meditation this day —</div>
+    <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+  </div>
+  {% endif %}
+  <div class="label">Daily Meditation</div>
+  <div class="lines"></div>
+</div>
+
 <div class="body-grid">
 
   <div class="col col-left">
@@ -374,44 +388,6 @@
 
 </div>
 
-<div class="bottom">
-
-  <div class="col col-left">
-    <div class="meditation-box">
-      {% if b.come_follow_me %}
-      <div class="cfm-inset">
-        <div class="lbl">— Notes from the Scriptures · Week of {{ b.come_follow_me.week_label }} —</div>
-        <div class="ref">{{ b.come_follow_me.week_reference }}</div>
-      </div>
-      {% endif %}
-      {% if b.prayer_group %}
-      <div class="pray-inset">
-        <div class="lbl">— Subjects of meditation this day —</div>
-        <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
-      </div>
-      {% endif %}
-      <div class="label">Daily Meditation</div>
-      <div class="lines"></div>
-    </div>
-  </div>
-
-  <div class="col">
-    {% if b.quote %}
-    <div class="aphorism">
-      “{{ b.quote.text }}”
-      {% if b.quote.attribution %}<span class="attr">— {{ b.quote.attribution }}</span>{% endif %}
-    </div>
-    {% endif %}
-
-    {% if b.joke %}
-    <div class="amusement">
-      <div class="label">— An amusement —</div>
-      <div class="text">{{ b.joke }}</div>
-    </div>
-    {% endif %}
-  </div>
-
-</div>
 
 <footer>
   Recorded {{ b.for_date | date_long }} &middot; <span class="sig">Signed, the observer.</span>

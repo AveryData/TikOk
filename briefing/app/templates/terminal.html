@@ -146,23 +146,16 @@
   .cfm .ref { font-weight: 700; margin: 1pt 0 1pt 16pt; }
   .cfm .out { color: #555; margin-left: 16pt; }
 
-  /* Bottom: prayer + quote/joke */
-  .bottom {
-    display: flex;
-    gap: 14pt;
-    margin-top: 6pt;
-  }
-  .bottom .col { flex: 1; }
-  .bottom .col-left { flex: 0 0 295pt; }
-
+  /* Prayer buffer (above body-grid, full width) */
   .prayer {
     font-size: 8pt;
+    margin-bottom: 6pt;
   }
   .prayer .title { color: #2d5e2d; font-weight: 700; }
   .prayer pre.box {
     border: 0.6pt solid #0a0a0a;
     padding: 5pt 8pt;
-    height: 130pt;
+    height: 85pt;
     line-height: 1.35;
     background: rgba(255,255,255,0.5);
     margin: 0;
@@ -241,6 +234,15 @@
 </div>
 {% endif %}
 
+{# Prayer buffer above the body-grid — full width #}
+<div class="prayer">
+  <div class="title">// PRAYER.input · write-only buffer</div>
+<pre class="box">{% if b.come_follow_me %}<span class="stdin-line"><span class="tag">[scripture]</span> week={{ b.come_follow_me.week_label }} :: {{ b.come_follow_me.week_reference }}</span>
+{% endif %}{% if b.prayer_group %}<span class="stdin-line"><span class="tag">[pray for]</span> {% for n in b.prayer_group %}{{ n }}{% if not loop.last %} · {% endif %}{% endfor %}</span>
+{% endif %}<span class="stdin-line"><span class="tag">[stdin]</span>$ <span style="color:#999">_</span></span>
+<span class="blank"> </span></pre>
+</div>
+
 <div class="body-grid">
 
   <div class="col col-left">
@@ -295,36 +297,6 @@
 
 </div>
 
-<div class="bottom">
-
-  <div class="col col-left">
-    <div class="prayer">
-      <div class="title">// PRAYER.input · write-only buffer</div>
-<pre class="box">{% if b.come_follow_me %}<span class="stdin-line"><span class="tag">[scripture]</span> week={{ b.come_follow_me.week_label }} :: {{ b.come_follow_me.week_reference }}</span>
-{% endif %}{% if b.prayer_group %}<span class="stdin-line"><span class="tag">[pray for]</span> {% for n in b.prayer_group %}{{ n }}{% if not loop.last %} · {% endif %}{% endfor %}</span>
-{% endif %}<span class="stdin-line"><span class="tag">[stdin]</span>$ <span style="color:#999">_</span></span>
-<span class="blank"> </span></pre>
-    </div>
-  </div>
-
-  <div class="col">
-    {% if b.quote %}
-    <div class="quote">
-      <div class="title">$ cat /usr/share/wisdom/today</div>
-      <div class="text">&gt; "{{ b.quote.text }}"</div>
-      {% if b.quote.attribution %}<div class="attr">  — {{ b.quote.attribution }}</div>{% endif %}
-    </div>
-    {% endif %}
-
-    {% if b.joke %}
-    <div class="joke">
-      <div class="title">$ humor --random</div>
-      <div class="text">&gt; {{ b.joke }}</div>
-    </div>
-    {% endif %}
-  </div>
-
-</div>
 
 <footer>
   <span class="prompt">[eof]</span> printed {{ b.for_date.isoformat() }} {{ b.for_date.strftime("%H:%M") or "06:00" }} · exit 0 · the daily commit
