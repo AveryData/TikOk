@@ -23,14 +23,14 @@ class CalendarEvent:
 
     @property
     def time_range(self) -> str:
+        """Start time only — ranges wrap two lines in the narrow time
+        columns most personas use, and the end time is rarely as useful
+        as the start time at a glance."""
         if self.all_day or self.start is None:
             return "All day"
-        if self.end is None:
-            return self.start.strftime("%-I:%M %p").lower()
-        same_meridiem = self.start.strftime("%p") == self.end.strftime("%p")
-        start_fmt = "%-I:%M" if same_meridiem else "%-I:%M %p"
-        end_fmt = "%-I:%M %p"
-        return f"{self.start.strftime(start_fmt)}–{self.end.strftime(end_fmt)}".lower()
+        if self.start.minute == 0:
+            return self.start.strftime("%-I %p").lower()
+        return self.start.strftime("%-I:%M %p").lower()
 
 
 @dataclass
