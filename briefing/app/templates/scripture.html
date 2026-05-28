@@ -175,43 +175,48 @@
 
   .prayer-box {
     border: 0.75pt solid #1c160b;
-    height: 95pt;
-    padding: 5pt 11pt;
+    height: 115pt;
     margin-bottom: 6pt;
     display: flex;
     flex-direction: column;
     background: rgba(255,255,255,0.4);
+    overflow: hidden;
+  }
+  .prayer-box .top-row {
+    display: flex;
+    border-bottom: 0.4pt solid #1c160b;
   }
   .prayer-box .cfm-inset {
+    flex: 1;
     text-align: center;
-    border-bottom: 0.4pt solid #1c160b;
-    padding-bottom: 3pt;
-    margin-bottom: 4pt;
+    padding: 3pt 8pt;
+    border-right: 0.4pt solid #1c160b;
   }
   .prayer-box .cfm-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.22em; color: #7a5d2e; }
   .prayer-box .cfm-inset .ref { font-size: 9.5pt; font-weight: 700; margin-top: 1pt; }
   .prayer-box .pray-inset {
-    border-bottom: 0.3pt dotted #7a5d2e;
-    padding-bottom: 3pt;
-    margin-bottom: 4pt;
+    flex: 1;
+    padding: 3pt 8pt;
     text-align: center;
   }
   .prayer-box .pray-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.22em; color: #7a5d2e; margin-bottom: 1pt; }
   .prayer-box .pray-inset .names { font-size: 9pt; font-style: italic; }
   .prayer-box .pray-inset .names .n { white-space: nowrap; margin: 0 3pt; }
+  .prayer-box .write-row {
+    flex: 1;
+    padding: 4pt 11pt;
+    display: flex;
+    flex-direction: column;
+  }
   .prayer-box .label {
-    font-size: 7.5pt;
+    font-size: 7pt;
     text-transform: uppercase;
     letter-spacing: 0.22em;
-    border-bottom: 0.4pt solid #1c160b;
-    padding-bottom: 1pt;
-    margin-bottom: 4pt;
+    margin-bottom: 2pt;
     color: #7a5d2e;
     text-align: center;
   }
-  .prayer-box .lines {
-    flex: 1;
-  }
+  .prayer-box .lines { flex: 1; }
 
   .quote {
     border-top: 0.5pt solid #1c160b;
@@ -302,22 +307,26 @@
 </div>
 {% endif %}
 
-{# Prayer block above the body-grid — full width #}
+{# Prayer block: holy writings + names side-by-side, writing area below #}
 <div class="prayer-box">
-  {% if b.come_follow_me %}
-  <div class="cfm-inset">
-    <div class="lbl">❦ From the Holy Writings · Week of {{ b.come_follow_me.week_label }} ❦</div>
-    <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+  <div class="top-row">
+    {% if b.come_follow_me %}
+    <div class="cfm-inset">
+      <div class="lbl">❦ From the Holy Writings · {{ b.come_follow_me.week_label }} ❦</div>
+      <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+    </div>
+    {% endif %}
+    {% if b.prayer_group %}
+    <div class="pray-inset">
+      <div class="lbl">Names for which to pray this day</div>
+      <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+    </div>
+    {% endif %}
   </div>
-  {% endif %}
-  {% if b.prayer_group %}
-  <div class="pray-inset">
-    <div class="lbl">Names for which to pray this day</div>
-    <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+  <div class="write-row">
+    <div class="label">A Prayer of Supplication</div>
+    <div class="lines"></div>
   </div>
-  {% endif %}
-  <div class="label">A Prayer of Supplication</div>
-  <div class="lines"></div>
 </div>
 
 <div class="body-grid">

@@ -146,26 +146,43 @@
   .cfm .ref { font-weight: 700; margin: 1pt 0 1pt 16pt; }
   .cfm .out { color: #555; margin-left: 16pt; }
 
-  /* Prayer buffer (above body-grid, full width) */
+  /* Prayer buffer (above body-grid, full width, 2-col header) */
   .prayer {
     font-size: 8pt;
     margin-bottom: 6pt;
   }
   .prayer .title { color: #2d5e2d; font-weight: 700; }
-  .prayer pre.box {
+  .prayer .panel {
     border: 0.6pt solid #0a0a0a;
-    padding: 5pt 8pt;
-    height: 85pt;
-    line-height: 1.35;
     background: rgba(255,255,255,0.5);
+    display: flex;
+    flex-direction: column;
+    height: 100pt;
+    overflow: hidden;
+  }
+  .prayer .header-row {
+    display: flex;
+    border-bottom: 0.5pt solid #0a0a0a;
+    font-size: 8pt;
+  }
+  .prayer .header-row .col {
+    flex: 1;
+    padding: 4pt 8pt;
+  }
+  .prayer .header-row .col.cfm { border-right: 0.5pt solid #0a0a0a; }
+  .prayer .header-row .tag { font-weight: 700; color: #2d5e2d; }
+  .prayer .header-row .val { font-weight: 700; margin-left: 4pt; }
+  .prayer pre.box {
+    padding: 5pt 8pt;
+    line-height: 1.35;
     margin: 0;
     overflow: hidden;
     white-space: pre-wrap;
     font-family: inherit;
+    flex: 1;
   }
   .prayer .stdin-line { color: #2d5e2d; }
   .prayer .stdin-line .tag { font-weight: 700; }
-  .prayer .blank { /* intentionally empty space */ }
 
   .quote {
     border-top: 0.6pt solid #0a0a0a;
@@ -234,13 +251,25 @@
 </div>
 {% endif %}
 
-{# Prayer buffer above the body-grid — full width #}
+{# Prayer buffer: scripture + pray-for side-by-side header, write area below #}
 <div class="prayer">
   <div class="title">// PRAYER.input · write-only buffer</div>
-<pre class="box">{% if b.come_follow_me %}<span class="stdin-line"><span class="tag">[scripture]</span> week={{ b.come_follow_me.week_label }} :: {{ b.come_follow_me.week_reference }}</span>
-{% endif %}{% if b.prayer_group %}<span class="stdin-line"><span class="tag">[pray for]</span> {% for n in b.prayer_group %}{{ n }}{% if not loop.last %} · {% endif %}{% endfor %}</span>
-{% endif %}<span class="stdin-line"><span class="tag">[stdin]</span>$ <span style="color:#999">_</span></span>
-<span class="blank"> </span></pre>
+  <div class="panel">
+    <div class="header-row">
+      {% if b.come_follow_me %}
+      <div class="col cfm">
+        <span class="tag">[scripture]</span><span class="val">{{ b.come_follow_me.week_label }} :: {{ b.come_follow_me.week_reference }}</span>
+      </div>
+      {% endif %}
+      {% if b.prayer_group %}
+      <div class="col">
+        <span class="tag">[pray for]</span><span class="val">{% for n in b.prayer_group %}{{ n }}{% if not loop.last %} · {% endif %}{% endfor %}</span>
+      </div>
+      {% endif %}
+    </div>
+<pre class="box"><span class="stdin-line"><span class="tag">[stdin]</span>$ <span style="color:#999">_</span></span>
+</pre>
+  </div>
 </div>
 
 <div class="body-grid">

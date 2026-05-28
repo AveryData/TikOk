@@ -203,20 +203,23 @@
   .tasks .past-due { color: #8a0000; }
   .tasks .past-due .title::after { content: " ★"; font-style: normal; color: #8a0000; }
 
-  /* ===== Bottom row: combined prayer+CFM | quote+joke ===== */
+  /* Prayer block: CFM + names side-by-side, writing area below */
   .prayer-box {
     border: 0.75pt solid #111;
-    height: 95pt;
-    padding: 4pt 10pt;
+    height: 105pt;
     margin-bottom: 6pt;
     display: flex;
     flex-direction: column;
   }
-  .prayer-box .cfm-strip {
+  .prayer-box .top-row {
+    display: flex;
     border-bottom: 0.5pt solid #111;
-    padding-bottom: 3pt;
-    margin-bottom: 4pt;
+  }
+  .prayer-box .cfm-strip {
+    flex: 1;
+    padding: 3pt 8pt;
     text-align: center;
+    border-right: 0.5pt solid #111;
   }
   .prayer-box .cfm-strip .label {
     font-size: 6.5pt;
@@ -224,39 +227,30 @@
     letter-spacing: 0.18em;
     color: #555;
   }
-  .prayer-box .cfm-strip .ref {
-    font-size: 9.5pt;
-    font-weight: 700;
-    margin-top: 1pt;
-  }
-  .prayer-box .cfm-strip .theme {
-    font-style: italic;
-    font-size: 8pt;
-    color: #444;
-  }
+  .prayer-box .cfm-strip .ref { font-size: 9.5pt; font-weight: 700; margin-top: 1pt; }
+  .prayer-box .cfm-strip .theme { font-style: italic; font-size: 8pt; color: #444; }
   .prayer-box .pray-strip {
-    border-bottom: 0.4pt dashed #888;
-    padding-bottom: 3pt;
-    margin-bottom: 4pt;
+    flex: 1;
+    padding: 3pt 8pt;
+    text-align: center;
   }
   .prayer-box .pray-strip .label {
     font-size: 6.5pt;
     text-transform: uppercase;
     letter-spacing: 0.18em;
     color: #555;
-    text-align: center;
-    margin-bottom: 2pt;
+    margin-bottom: 1pt;
   }
   .prayer-box .pray-strip .names {
-    display: flex;
-    flex-wrap: wrap;
-    column-gap: 12pt;
-    row-gap: 1pt;
-    justify-content: center;
-    font-size: 9pt;
+    font-size: 8.5pt;
+    line-height: 1.3;
   }
-  .prayer-box .pray-strip .names .n {
-    white-space: nowrap;
+  .prayer-box .pray-strip .names .n { white-space: nowrap; margin: 0 4pt; }
+  .prayer-box .write-row {
+    flex: 1;
+    padding: 4pt 10pt;
+    display: flex;
+    flex-direction: column;
   }
   .prayer-box .prayer-label {
     font-size: 6.5pt;
@@ -266,10 +260,7 @@
     text-align: center;
     margin-bottom: 2pt;
   }
-  .prayer-box .blank {
-    flex: 1;
-    /* intentionally empty — open space for handwritten prayer */
-  }
+  .prayer-box .blank { flex: 1; }
 
   .quote {
     border-top: 0.5pt solid #111;
@@ -385,27 +376,27 @@
 </div>
 {% endif %}
 
-{# Prayer block above the body-grid — full width, holds CFM ref + names + blank writing area #}
+{# Prayer block: CFM + names side-by-side, writing area below #}
 <div class="prayer-box">
-  {% if b.come_follow_me %}
-  <div class="cfm-strip">
-    <div class="label">Come Follow Me &middot; Week of {{ b.come_follow_me.week_label }}</div>
-    <div class="ref">{{ b.come_follow_me.week_reference }}</div>
-    {% if b.come_follow_me.week_theme %}<div class="theme">{{ b.come_follow_me.week_theme }}</div>{% endif %}
-  </div>
-  {% endif %}
-
-  {% if b.prayer_group %}
-  <div class="pray-strip">
-    <div class="label">Pray for today</div>
-    <div class="names">
-      {% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% endfor %}
+  <div class="top-row">
+    {% if b.come_follow_me %}
+    <div class="cfm-strip">
+      <div class="label">Come Follow Me &middot; Week of {{ b.come_follow_me.week_label }}</div>
+      <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+      {% if b.come_follow_me.week_theme %}<div class="theme">{{ b.come_follow_me.week_theme }}</div>{% endif %}
     </div>
+    {% endif %}
+    {% if b.prayer_group %}
+    <div class="pray-strip">
+      <div class="label">Pray for today</div>
+      <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+    </div>
+    {% endif %}
   </div>
-  {% endif %}
-
-  <div class="prayer-label">Morning Prayer</div>
-  <div class="blank"></div>
+  <div class="write-row">
+    <div class="prayer-label">Morning Prayer</div>
+    <div class="blank"></div>
+  </div>
 </div>
 
 <div class="body-grid">

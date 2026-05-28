@@ -228,14 +228,16 @@
   .codex .theme { font-style: italic; font-size: 8.5pt; font-weight: 700; }
   .codex .today { font-size: 8.5pt; margin-top: 1pt; font-weight: 700; }
 
-  /* Two-column prayer block: left = CFM + names (compact), right = blank writing space */
+  /* Prayer block: red label header → CFM + names side-by-side → full-width writing area */
   .thought-cloud {
     border: 1.5pt solid #0a0a0a;
-    height: 120pt;
+    height: 130pt;
     margin-bottom: 6pt;
     background: #fff;
     box-shadow: 2pt 2pt 0 #0a0a0a;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
   .thought-cloud .label {
     font-size: 7.5pt;
@@ -248,36 +250,31 @@
     font-weight: 900;
     border-bottom: 1.5pt solid #0a0a0a;
   }
-  .thought-cloud .cols {
+  .thought-cloud .top-row {
     display: flex;
-    height: 96pt; /* total - label band */
+    border-bottom: 1.5pt solid #0a0a0a;
   }
-  .thought-cloud .col-meta {
-    flex: 0 0 36%;
-    padding: 5pt 8pt;
-    border-right: 1.5pt solid #0a0a0a;
-    background: #fff;
-    display: flex;
-    flex-direction: column;
-    gap: 4pt;
-  }
-  .thought-cloud .col-write {
+  .thought-cloud .cfm-inset {
     flex: 1;
-    padding: 5pt 10pt;
-    background: #fff;
+    text-align: center;
+    padding: 4pt 6pt;
+    border-right: 1pt solid #0a0a0a;
   }
-  .thought-cloud .cfm-inset { text-align: center; }
   .thought-cloud .cfm-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.18em; color: #1d5cb8; font-weight: 900; }
   .thought-cloud .cfm-inset .ref { font-size: 9pt; font-weight: 900; margin-top: 1pt; }
   .thought-cloud .pray-inset {
+    flex: 1;
     text-align: center;
+    padding: 4pt 6pt;
     background: #ffce00;
-    padding: 3pt 4pt;
-    border: 1pt solid #0a0a0a;
   }
   .thought-cloud .pray-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.16em; color: #e62429; font-weight: 900; margin-bottom: 1pt; }
   .thought-cloud .pray-inset .names { font-size: 8pt; font-weight: 700; line-height: 1.3; }
   .thought-cloud .pray-inset .names .n { white-space: nowrap; }
+  .thought-cloud .write-row {
+    flex: 1;
+    padding: 4pt 10pt;
+  }
   .thought-cloud .sub-label {
     font-size: 6.5pt;
     text-transform: uppercase;
@@ -376,28 +373,26 @@
 </div>
 {% endif %}
 
-{# Prayer bubble above body-grid — full width, two columns #}
+{# Prayer bubble above body-grid — CFM + names side-by-side, writing space below #}
 <div class="thought-cloud">
   <div class="label">★ Peter's Prayer Bubble ★</div>
-  <div class="cols">
-    <div class="col-meta">
-      {% if b.come_follow_me %}
-      <div class="cfm-inset">
-        <div class="lbl">★ Origin Story · Week of {{ b.come_follow_me.week_label }} ★</div>
-        <div class="ref">{{ b.come_follow_me.week_reference }}</div>
-      </div>
-      {% endif %}
-      {% if b.prayer_group %}
-      <div class="pray-inset">
-        <div class="lbl">★ Friendly Neighborhood Watch ★</div>
-        <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
-      </div>
-      {% endif %}
+  <div class="top-row">
+    {% if b.come_follow_me %}
+    <div class="cfm-inset">
+      <div class="lbl">★ Origin Story · Week of {{ b.come_follow_me.week_label }} ★</div>
+      <div class="ref">{{ b.come_follow_me.week_reference }}</div>
     </div>
-    <div class="col-write">
-      <div class="sub-label">★ Today's web of words ★</div>
-      <div class="lines"></div>
+    {% endif %}
+    {% if b.prayer_group %}
+    <div class="pray-inset">
+      <div class="lbl">★ Friendly Neighborhood Watch ★</div>
+      <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
     </div>
+    {% endif %}
+  </div>
+  <div class="write-row">
+    <div class="sub-label">★ Today's web of words ★</div>
+    <div class="lines"></div>
   </div>
 </div>
 
