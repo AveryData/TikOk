@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime
-from typing import Literal
+from datetime import date, datetime, timezone
+from typing import Any, Literal
 from zoneinfo import ZoneInfo
 
-from fastapi import FastAPI, HTTPException, Query, Response
-from fastapi.responses import PlainTextResponse
+from fastapi import FastAPI, HTTPException, Query, Request, Response
+from fastapi.responses import JSONResponse, PlainTextResponse
 
 from app.config import get_settings
 from app.models import Briefing, Countdown, TickerQuote, Weather
@@ -14,6 +14,11 @@ from app.render.pdf import render_html, render_pdf
 from app.render.sample import sample_briefing
 from app.sources.calendar import fetch_today_and_upcoming
 from app.sources.extras import prayer_group_for
+from app.sources.health import (
+    load_latest_snapshot,
+    parse_hae_payload,
+    store_snapshot,
+)
 from app.sources.tasks import fetch_top_tasks
 from app.sources.ticker import fetch_ticker
 from app.sources.weather import fetch_weather
@@ -121,6 +126,16 @@ def _build_briefing(for_date: date | None = None) -> Briefing:
         except Exception as exc:  # noqa: BLE001
             logger.warning("calendar fetch failed, using sample: %s", exc)
 
+    # Latest Health Auto Export snapshot from GCS.
+    if s.health_bucket:
+        try:
+            snap = load_latest_snapshot(s.health_bucket, s.health_max_age_hours)
+            if snap:
+                b.health = snap
+                logger.info("health snapshot loaded for %s", snap.snapshot_date)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("health load failed, omitting: %s", exc)
+
     # Real Notion tasks.
     if all([s.notion_token, s.notion_task_database_id, s.notion_assignee_user_id]):
         try:
@@ -185,6 +200,39 @@ def briefing(
         content=pdf,
         media_type="application/pdf",
         headers={"Content-Disposition": f'inline; filename="{filename}"'},
+    )
+
+
+@app.post("/health")
+async def ingest_health(request: Request, secret: str | None = Query(default=None)) -> JSONResponse:
+    """Receive a Health Auto Export push and stash it in GCS.
+
+    Configure HAE → Automation → REST API export with:
+        URL:    <cloud-run-url>/health?secret=<BRIEFING_SHARED_SECRET>
+        Method: POST, JSON, Aggregated, trailing 7 days
+        Schedule: daily, before the morning print
+    """
+    _check_secret(secret)
+    s = get_settings()
+    if not s.health_bucket:
+        raise HTTPException(status_code=503, detail="HEALTH_BUCKET not configured")
+    try:
+        payload: dict[str, Any] = await request.json()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail=f"Invalid JSON: {exc}")
+    received_at = datetime.now(timezone.utc)
+    snapshot = parse_hae_payload(payload, received_at=received_at)
+    try:
+        store_snapshot(s.health_bucket, snapshot, raw=payload)
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("health store failed")
+        raise HTTPException(status_code=500, detail=f"Storage error: {exc}")
+    logger.info(
+        "health snapshot stored for %s (steps=%s sleep=%s)",
+        snapshot.snapshot_date, snapshot.steps, snapshot.sleep_hours,
+    )
+    return JSONResponse(
+        {"ok": True, "snapshot_date": snapshot.snapshot_date.isoformat()}
     )
 
 

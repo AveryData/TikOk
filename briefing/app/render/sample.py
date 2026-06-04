@@ -1,18 +1,20 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from app.models import (
     Briefing,
     CalendarEvent,
     ComeFollowMe,
     Countdown,
+    HealthSnapshot,
     Priority,
     Task,
     TickerQuote,
     UpcomingEvent,
     Weather,
     WeatherHour,
+    WorkoutTotals,
 )
 from app.sources.extras import (
     come_follow_me_for,
@@ -130,6 +132,29 @@ def sample_briefing(today: date | None = None) -> Briefing:
         ";Austin,Pat,Hannah & Dillon,Brynn & Kobe,Steven,Dhawan"
     )
 
+    health = HealthSnapshot(
+        pushed_at=datetime.now(timezone.utc),
+        snapshot_date=today - timedelta(days=1),
+        steps=11842,
+        active_energy_kcal=684,
+        resting_hr_bpm=54.0,
+        resting_hr_7d_avg=56.0,
+        hrv_ms=72.0,
+        hrv_7d_avg=66.0,
+        weight_lb=178.4,
+        weight_7d_delta_lb=-0.8,
+        vo2_max=46.2,
+        sleep_hours=7.4,
+        sleep_deep_hours=1.1,
+        sleep_rem_hours=1.6,
+        workouts_7d=WorkoutTotals(
+            window_days=7,
+            miles_run=14.2, run_count=3,
+            miles_biked=62.5, bike_count=2,
+            miles_swam=1.8, swim_count=2,
+        ),
+    )
+
     return Briefing(
         for_date=today,
         greeting="Good morning, Avery & family",
@@ -144,4 +169,5 @@ def sample_briefing(today: date | None = None) -> Briefing:
         ticker=ticker,
         countdowns=countdowns,
         prayer_group=prayer_group_for(today, sample_rotation),
+        health=health,
     )

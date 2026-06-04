@@ -42,6 +42,15 @@ class Settings(BaseSettings):
     # Optional auth on the endpoint itself
     briefing_shared_secret: str | None = None
 
+    # Health Auto Export landing pad. Set HEALTH_BUCKET to a GCS bucket name
+    # to enable; leave unset to disable the /health endpoint and the health
+    # block on the page. Cloud Run's default service account needs Storage
+    # Object Admin on the bucket. HAE pushes the last 7 days each morning;
+    # snapshots older than HEALTH_MAX_AGE_HOURS are treated as missing so a
+    # broken sync doesn't show stale numbers on the print.
+    health_bucket: str | None = None
+    health_max_age_hours: int = 36
+
     # Ticker symbol to show (set to empty string to hide)
     ticker_symbol: str = "SPY"
 

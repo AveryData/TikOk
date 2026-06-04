@@ -145,6 +145,43 @@ class Countdown:
 
 
 @dataclass
+class WorkoutTotals:
+    """Trailing-window workout distance, summed by sport from HAE."""
+    window_days: int
+    miles_run: float = 0.0
+    miles_biked: float = 0.0
+    miles_swam: float = 0.0
+    run_count: int = 0
+    bike_count: int = 0
+    swim_count: int = 0
+
+
+@dataclass
+class HealthSnapshot:
+    """One day's Apple Health roll-up, posted by Health Auto Export.
+
+    Numbers are for the most recent complete day (yesterday) unless
+    otherwise noted. The 7d averages let the template show trend arrows
+    without us having to walk history at render time.
+    """
+    pushed_at: datetime          # when HAE delivered this payload
+    snapshot_date: date          # the day these numbers represent
+    steps: int | None = None
+    active_energy_kcal: int | None = None
+    resting_hr_bpm: float | None = None
+    resting_hr_7d_avg: float | None = None
+    hrv_ms: float | None = None
+    hrv_7d_avg: float | None = None
+    weight_lb: float | None = None
+    weight_7d_delta_lb: float | None = None
+    vo2_max: float | None = None
+    sleep_hours: float | None = None
+    sleep_deep_hours: float | None = None
+    sleep_rem_hours: float | None = None
+    workouts_7d: WorkoutTotals | None = None
+
+
+@dataclass
 class Briefing:
     for_date: date
     greeting: str
@@ -159,3 +196,4 @@ class Briefing:
     ticker: TickerQuote | None = None
     countdowns: list[Countdown] = field(default_factory=list)
     prayer_group: list[str] = field(default_factory=list)
+    health: HealthSnapshot | None = None

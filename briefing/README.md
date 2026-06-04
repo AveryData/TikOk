@@ -145,6 +145,60 @@ Now: tap phone to tag → PDF prints. Phone must be on home Wi-Fi at tap
 time (same network as the printer); since the tag's at home, this is
 always true.
 
+## Health Auto Export (Apple Health → briefing)
+
+HAE pushes a JSON blob to `/health?secret=…` each morning; the service
+parses it into a snapshot, writes it to a GCS bucket, and the next
+`/briefing` request reads the latest snapshot.
+
+### 1. Make the bucket
+```bash
+PROJECT=$(gcloud config get-value project)
+gcloud storage buckets create gs://record-of-our-day-health \
+  --location=us-central1 --uniform-bucket-level-access
+
+# Let Cloud Run's default service account read/write the bucket.
+PROJ_NUM=$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')
+gcloud storage buckets add-iam-policy-binding gs://record-of-our-day-health \
+  --member="serviceAccount:${PROJ_NUM}-compute@developer.gserviceaccount.com" \
+  --role=roles/storage.objectAdmin
+```
+
+### 2. Point the service at it
+```bash
+gcloud run services update daily-briefing --region us-central1 \
+  --update-env-vars HEALTH_BUCKET=record-of-our-day-health
+```
+
+### 3. Configure the HAE remote
+In **Health Auto Export → Automations → REST API**:
+
+| Field | Value |
+|---|---|
+| URL | `https://daily-briefing-…run.app/health?secret=<BRIEFING_SHARED_SECRET>` |
+| Method | POST |
+| Format | JSON, **Aggregated** (not raw samples) |
+| Aggregation | Daily |
+| Range | Last 7 days |
+| Schedule | Daily, ~5:00 am (before the print) |
+
+Check these metrics:
+- Steps · Active Energy · Resting Heart Rate · Heart Rate Variability
+- Weight · VO2 Max · Sleep Analysis
+- Workouts (toggle the "Include Workouts" switch)
+
+### 4. Verify
+After HAE runs once:
+```bash
+URL=$(gcloud run services describe daily-briefing --region us-central1 --format='value(status.url)')
+curl -s "$URL/briefing?secret=$SECRET&fmt=html" | grep -i steps   # should reflect real data
+gcloud storage ls gs://record-of-our-day-health/health/snapshots/  # one file per day
+```
+
+If a push fails the briefing keeps rendering — stale snapshots older
+than `HEALTH_MAX_AGE_HOURS` (default 36) are dropped silently so the
+page never shows numbers from a broken sync.
+
 ## Configure later
 
 Set or update env vars without rebuilding:
@@ -164,6 +218,8 @@ All env vars (`briefing/app/config.py`):
 | `TICKER_SYMBOL` | `SPY` | Yahoo Finance symbol (set empty to hide) |
 | `COUNTDOWNS` | Bear Lake | Comma-separated `"Label@YYYY-MM-DD"` entries |
 | `BRIEFING_SHARED_SECRET` | unset | Gate the endpoint; required if set |
+| `HEALTH_BUCKET` | unset | GCS bucket name for Health Auto Export snapshots |
+| `HEALTH_MAX_AGE_HOURS` | `36` | Drop the snapshot if HAE hasn't pushed within this window |
 | `GOOGLE_OAUTH_*` / `NOTION_*` | unset | For wiring real calendar + tasks (next step) |
 
 ## Roadmap
@@ -175,6 +231,7 @@ All env vars (`briefing/app/config.py`):
 - [x] Graceful fallback to sample data when a source fetch fails
 - [ ] Wire Google Calendar (today's events + upcoming 7 days)
 - [ ] Wire Notion DCJ Task Board (top 10 by urgency)
+- [x] Health Auto Export receiver + GCS storage (template render pending)
 - [ ] Populate `come_follow_me_2026.json` (run `scripts/scrape_come_follow_me.py` locally)
 - [ ] Deploy to Cloud Run
 - [ ] Build iOS Shortcut + program NFC tag
