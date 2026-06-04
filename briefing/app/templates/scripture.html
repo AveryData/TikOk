@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>An Account of Our Day — {{ b.for_date | date_short }}</title>
+<style>
+  @page {
+    size: Letter;
+    margin: 0.4in 0.55in 0.35in 0.55in;
+  }
+  html, body {
+    font-family: "Liberation Serif", "Charter", "Georgia", serif;
+    color: #1c160b;
+    background: #fefcf6;
+  }
+  body { font-size: 9pt; line-height: 1.3; margin: 0; }
+
+  /* ===== Outer ornament ===== */
+  .frame {
+    border: 1.2pt double #1c160b;
+    padding: 6pt 12pt 5pt 12pt;
+  }
+
+  .masthead {
+    text-align: center;
+    border-bottom: 0.5pt solid #1c160b;
+    padding-bottom: 4pt;
+    margin-bottom: 4pt;
+  }
+  .masthead .ornament {
+    font-size: 9pt;
+    letter-spacing: 0.6em;
+    color: #7a5d2e;
+    margin-bottom: 0pt;
+  }
+  .masthead .title {
+    font-size: 17pt;
+    font-weight: 700;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    line-height: 1.05;
+  }
+  .masthead .subtitle {
+    font-style: italic;
+    font-size: 9pt;
+    margin-top: 1pt;
+    color: #4a3a16;
+  }
+
+  /* ===== Opening narration ===== */
+  .narration {
+    font-style: italic;
+    text-align: justify;
+    font-size: 9pt;
+    line-height: 1.35;
+    margin: 3pt 0 4pt 0;
+    text-indent: 12pt;
+  }
+  .narration::first-line { font-style: normal; font-variant: small-caps; letter-spacing: 0.04em; }
+  .narration .vmark {
+    font-style: normal;
+    color: #7a5d2e;
+    font-weight: 700;
+    font-size: 9pt;
+    margin-right: 3pt;
+    vertical-align: 1pt;
+  }
+
+  /* ===== Stats verse strip ===== */
+  .stats-verse {
+    border-top: 0.5pt solid #1c160b;
+    border-bottom: 0.5pt solid #1c160b;
+    padding: 3pt 0;
+    margin-bottom: 4pt;
+    font-size: 9pt;
+    line-height: 1.35;
+  }
+  .stats-verse .verse {
+    display: flex;
+    margin-bottom: 1pt;
+  }
+  .stats-verse .v-no {
+    flex: 0 0 18pt;
+    text-align: right;
+    color: #7a5d2e;
+    font-weight: 700;
+    padding-right: 6pt;
+    font-variant-numeric: tabular-nums;
+  }
+  .stats-verse .v-text { flex: 1; text-align: justify; }
+  .stats-verse strong { color: #1c160b; }
+
+  /* ===== Year ribbon ===== */
+  .year-ribbon {
+    text-align: center;
+    font-style: italic;
+    font-size: 8.5pt;
+    color: #4a3a16;
+    padding-bottom: 4pt;
+    border-bottom: 0.5pt solid #1c160b;
+    margin-bottom: 4pt;
+  }
+  .year-ribbon .bar {
+    display: inline-block;
+    width: 200pt;
+    height: 6pt;
+    border: 0.4pt solid #1c160b;
+    position: relative;
+    vertical-align: -1pt;
+    margin: 0 4pt;
+  }
+  .year-ribbon .bar .fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: #1c160b;
+  }
+
+  /* ===== Two-column body ===== */
+  .body-grid {
+    display: flex;
+    gap: 14pt;
+    border-bottom: 0.5pt solid #1c160b;
+    padding-bottom: 4pt;
+    margin-bottom: 4pt;
+  }
+  .body-grid .col { flex: 1; }
+  .body-grid .col-left  { border-right: 0.5pt solid #1c160b; padding-right: 14pt; }
+
+  h2.section {
+    text-align: center;
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: #7a5d2e;
+    margin: 0 0 3pt 0;
+    padding: 0 0 2pt 0;
+  }
+  h2.section .ornament { color: #7a5d2e; }
+  h2.section.tight { margin-top: 6pt; }
+
+  /* ===== Verses (events & tasks) ===== */
+  .verses .verse {
+    display: flex;
+    margin-bottom: 2.5pt;
+    font-size: 9pt;
+    line-height: 1.3;
+  }
+  .verses .v-no {
+    flex: 0 0 18pt;
+    text-align: right;
+    color: #7a5d2e;
+    font-weight: 700;
+    padding-right: 6pt;
+    font-variant-numeric: tabular-nums;
+  }
+  .verses .v-text { flex: 1; }
+  .verses .v-text .lead { font-style: italic; color: #4a3a16; }
+  .verses .v-text .what { font-weight: 700; }
+  .verses .v-text .meta { font-style: italic; font-size: 8.5pt; color: #4a3a16; }
+  .verses .past-due .what { color: #6e1010; }
+  .verses .past-due .what::after { content: " ✦"; }
+
+  /* ===== Come Follow Me ===== */
+  .cfm {
+    text-align: center;
+    padding: 3pt 0;
+    margin-bottom: 5pt;
+    border-top: 0.5pt solid #1c160b;
+    border-bottom: 0.5pt solid #1c160b;
+  }
+  .cfm .label { font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.22em; color: #7a5d2e; }
+  .cfm .ref { font-size: 10pt; font-weight: 700; margin: 1pt 0; }
+  .cfm .theme { font-style: italic; font-size: 8.5pt; color: #4a3a16; }
+  .cfm .today { font-size: 8.5pt; margin-top: 1pt; }
+
+  .prayer-box {
+    border: 0.75pt solid #1c160b;
+    height: 115pt;
+    margin-bottom: 6pt;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255,255,255,0.4);
+    overflow: hidden;
+  }
+  .prayer-box .top-row {
+    display: flex;
+    border-bottom: 0.4pt solid #1c160b;
+  }
+  .prayer-box .cfm-inset {
+    flex: 1;
+    text-align: center;
+    padding: 3pt 8pt;
+    border-right: 0.4pt solid #1c160b;
+  }
+  .prayer-box .cfm-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.22em; color: #7a5d2e; }
+  .prayer-box .cfm-inset .ref { font-size: 9.5pt; font-weight: 700; margin-top: 1pt; }
+  .prayer-box .pray-inset {
+    flex: 1;
+    padding: 3pt 8pt;
+    text-align: center;
+  }
+  .prayer-box .pray-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.22em; color: #7a5d2e; margin-bottom: 1pt; }
+  .prayer-box .pray-inset .names { font-size: 9pt; font-style: italic; }
+  .prayer-box .pray-inset .names .n { white-space: nowrap; margin: 0 3pt; }
+  .prayer-box .write-row {
+    flex: 1;
+    padding: 4pt 11pt;
+    display: flex;
+    flex-direction: column;
+  }
+  .prayer-box .label {
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    margin-bottom: 2pt;
+    color: #7a5d2e;
+    text-align: center;
+  }
+  .prayer-box .lines { flex: 1; }
+
+  .quote {
+    border-top: 0.5pt solid #1c160b;
+    border-bottom: 0.5pt solid #1c160b;
+    padding: 4pt 0;
+    margin-bottom: 4pt;
+    font-style: italic;
+    text-align: center;
+    font-size: 9.5pt;
+    line-height: 1.35;
+  }
+  .quote .open { color: #7a5d2e; font-size: 14pt; vertical-align: -3pt; margin-right: 1pt; }
+  .quote .close { color: #7a5d2e; font-size: 14pt; vertical-align: -6pt; margin-left: 1pt; }
+  .quote .attr {
+    display: block;
+    font-style: normal;
+    font-size: 8.5pt;
+    margin-top: 2pt;
+    color: #4a3a16;
+  }
+
+  .joke .label {
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    text-align: center;
+    margin-bottom: 2pt;
+    color: #7a5d2e;
+  }
+  .joke .text { font-size: 9.5pt; text-align: center; font-style: italic; }
+
+  footer {
+    margin-top: 5pt;
+    padding-top: 3pt;
+    border-top: 0.5pt solid #1c160b;
+    text-align: center;
+    font-size: 7.5pt;
+    font-style: italic;
+    color: #4a3a16;
+    letter-spacing: 0.08em;
+  }
+  footer .selah { font-variant: small-caps; letter-spacing: 0.16em; }
+</style>
+</head>
+<body>
+
+<div class="frame">
+
+<div class="masthead">
+  <div class="ornament">❦ &nbsp; ✦ &nbsp; ❦</div>
+  <div class="title">An Account of Our Day</div>
+  <div class="subtitle">Inscribed upon {{ b.for_date | scripture_date }}, in {{ b.weather.location }}.</div>
+</div>
+
+<p class="narration">
+  <span class="vmark">¶ 1</span>
+  And it came to pass, on the morning of this day, that {{ b.greeting.replace('Good morning, ', '') }} did arise to behold the heavens. The air without was <strong>{{ b.weather.current_f }}</strong> degrees, and was foretold to grow warm unto <strong>{{ b.weather.high_f }}</strong>, and to cool again unto <strong>{{ b.weather.low_f }}</strong>. The sky was {{ b.weather.summary | lower }}.
+  <span class="vmark">¶ 2</span>
+  The sun did arise at {{ b.weather.sunrise }}, and shall set at {{ b.weather.sunset }}; and the chance of rain upon the land is <strong>{{ b.weather.precip_chance_today }}%</strong>.
+</p>
+
+{% if b.ticker or b.countdowns %}
+<div class="stats-verse">
+  {% if b.ticker %}
+  <div class="verse">
+    <div class="v-no">¶ 3</div>
+    <div class="v-text">
+      Behold, the great standard called <strong>{{ b.ticker.symbol }}</strong> did stand at <strong>${{ "%.2f"|format(b.ticker.price) }}</strong>. Yea, in the past sennight it had grown by <strong>{{ b.ticker.label_7d }}</strong>; in thirty days by <strong>{{ b.ticker.label_30d }}</strong>; and since the year began, by <strong>{{ b.ticker.label_ytd }}</strong>.
+    </div>
+  </div>
+  {% endif %}
+  {% for c in b.countdowns %}
+  <div class="verse">
+    <div class="v-no">¶ {{ loop.index + (3 if b.ticker else 2) }}</div>
+    <div class="v-text">
+      And it shall come to pass that in <strong>{{ c.days_until(b.for_date) }} days</strong> shall be the trial of <strong>{{ c.label }}</strong>, on the {{ c.target.day | with_th }} day of the month.
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if b.year_progress %}
+<div class="year-ribbon">
+  Of the {{ b.year_progress.days_in_year }} days appointed unto this year, <strong>{{ b.year_progress.day_of_year }}</strong> have passed —
+  <span class="bar"><span class="fill" style="width: {{ b.year_progress.pct | round }}%"></span></span>
+  even <strong>{{ b.year_progress.pct_label }}</strong>.
+</div>
+{% endif %}
+
+{# Prayer block: holy writings + names side-by-side, writing area below #}
+<div class="prayer-box">
+  <div class="top-row">
+    {% if b.come_follow_me %}
+    <div class="cfm-inset">
+      <div class="lbl">❦ From the Holy Writings · {{ b.come_follow_me.week_label }} ❦</div>
+      <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+    </div>
+    {% endif %}
+    {% if b.prayer_group %}
+    <div class="pray-inset">
+      <div class="lbl">Names for which to pray this day</div>
+      <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="write-row">
+    <div class="label">A Prayer of Supplication</div>
+    <div class="lines"></div>
+  </div>
+</div>
+
+<div class="body-grid">
+
+  <div class="col col-left">
+    <section class="verses">
+      <h2 class="section"><span class="ornament">¶</span> &nbsp; An Account of This Day's Doings &nbsp; <span class="ornament">¶</span></h2>
+      {% for e in b.events %}
+      <div class="verse">
+        <div class="v-no">{{ loop.index }}</div>
+        <div class="v-text">
+          {% if e.start and not e.all_day %}
+          <span class="lead">And in the {{ e.start.hour | hour_word }} hour{% if e.start.minute %}, thirty minutes{% endif %}:</span>
+          {% endif %}
+          <span class="what">{{ e.title }}</span>
+          {% if e.location %} <span class="meta">at {{ e.location }}</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+
+    {% if b.upcoming %}
+    <section class="verses">
+      <h2 class="section tight"><span class="ornament">✦</span> &nbsp; Gatherings Yet To Come &nbsp; <span class="ornament">✦</span></h2>
+      {% for u in b.upcoming %}
+      <div class="verse">
+        <div class="v-no">{{ loop.index }}</div>
+        <div class="v-text">
+          <span class="lead">{{ u.day_label }}{% if u.time_label %} at {{ u.time_label }}{% endif %}:</span>
+          <span class="what">{{ u.title }}</span>{% if u.location %} <span class="meta">at {{ u.location }}</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+  </div>
+
+  <div class="col">
+    <section class="verses">
+      <h2 class="section"><span class="ornament">§</span> &nbsp; The Labors Appointed &nbsp; <span class="ornament">§</span></h2>
+      {% for t in b.tasks %}
+      <div class="verse {% if t.is_past_due %}past-due{% endif %}">
+        <div class="v-no">{{ loop.index }}</div>
+        <div class="v-text">
+          <span class="what">{{ t.title }}</span><br>
+          <span class="meta">
+            {{ t.priority.value }}{% if t.project %} · {{ t.project }}{% endif %}{% if t.due %} · appointed unto {{ t.due | due }}{% if t.is_past_due %} (the time hath passed){% endif %}{% endif %}
+          </span>
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+  </div>
+
+</div>
+
+
+<footer>
+  <span class="selah">Selah.</span> &nbsp; Inscribed upon {{ b.for_date | scripture_date }}.
+</footer>
+
+</div>
+
+</body>
+</html>

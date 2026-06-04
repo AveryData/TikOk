@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Family Dispatch — {{ b.for_date | date_short }}</title>
+<style>
+  @page {
+    size: Letter;
+    margin: 0.4in 0.5in 0.35in 0.5in;
+  }
+  html, body { font-family: "Bitstream Charter", "Charter", "Georgia", serif; color: #111; }
+  body { font-size: 9pt; line-height: 1.25; margin: 0; }
+
+  /* ===== Masthead ===== */
+  .masthead {
+    text-align: center;
+    border-top: 2pt solid #111;
+    border-bottom: 0.5pt solid #111;
+    padding: 5pt 0 3pt 0;
+  }
+  .masthead .title {
+    font-size: 24pt;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    line-height: 1.05;
+  }
+  .masthead .subline {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8pt;
+    font-style: italic;
+    margin-top: 3pt;
+    padding-top: 3pt;
+    border-top: 0.5pt solid #111;
+    letter-spacing: 0.05em;
+  }
+  .masthead .date { font-weight: 700; font-style: normal; text-transform: uppercase; }
+
+  .greeting {
+    text-align: center;
+    font-style: italic;
+    font-size: 10pt;
+    margin: 4pt 0 3pt 0;
+  }
+
+  /* ===== Weather strip ===== */
+  .weather {
+    text-align: center;
+    font-size: 8.5pt;
+    line-height: 1.25;
+    border-top: 0.5pt solid #111;
+    border-bottom: 0.5pt solid #111;
+    padding: 2pt 0;
+  }
+  .weather .strong { font-weight: 700; }
+  .weather .summary { font-style: italic; }
+
+  /* ===== Stats strip (ticker + countdowns) ===== */
+  .stats {
+    display: flex;
+    border-bottom: 0.5pt solid #111;
+    margin-bottom: 0;
+  }
+  .stats .cell {
+    flex: 1;
+    padding: 2pt 8pt 3pt 8pt;
+    border-right: 0.5pt solid #111;
+    text-align: center;
+  }
+  .stats .cell:last-child { border-right: 0; }
+  .stats .cell .label {
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #555;
+  }
+  .stats .cell .value {
+    font-size: 11pt;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-top: 1pt;
+  }
+  .stats .cell .sub {
+    font-size: 8pt;
+    font-variant-numeric: tabular-nums;
+    margin-top: 1pt;
+  }
+  .stats .pos { color: #0a5e0a; font-weight: 700; }
+  .stats .neg { color: #8a0000; font-weight: 700; }
+
+  /* ===== Year progress strip ===== */
+  /* Grid layout — nested flex was collapsing the months row in some
+     WeasyPrint builds, especially when the surrounding font fell back
+     from Charter to DejaVu Serif (wider stat text squeezed the middle). */
+  .year {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 8pt;
+    padding: 2pt 0 3pt 0;
+    margin-bottom: 4pt;
+    border-bottom: 0.5pt solid #111;
+  }
+  .year .label {
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+  }
+  .year .months {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 2pt;
+    width: 100%;
+  }
+  .year .month {
+    height: 11pt;
+    border: 0.4pt solid #111;
+    font-size: 6pt;
+    text-align: center;
+    line-height: 11pt;
+    color: #555;
+    position: relative;
+    overflow: hidden;
+  }
+  .year .month.done { background: #111; color: #fff; }
+  .year .month .fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: #111;
+    z-index: 0;
+  }
+  .year .month .letter {
+    position: relative;
+    z-index: 1;
+    mix-blend-mode: difference;
+    color: #fff;
+  }
+  .year .stat {
+    font-size: 8.5pt;
+    font-variant-numeric: tabular-nums;
+    flex: 0 0 auto;
+    font-weight: 700;
+  }
+
+  /* ===== Two-column main body ===== */
+  .body-grid {
+    display: flex;
+    gap: 12pt;
+    border-bottom: 0.5pt solid #111;
+    padding-bottom: 4pt;
+    margin-bottom: 4pt;
+  }
+  .body-grid .col { flex: 1; }
+  .body-grid .col-left  { border-right: 0.5pt solid #111; padding-right: 12pt; }
+
+  h2.section {
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    text-align: center;
+    margin: 0 0 3pt 0;
+    padding-bottom: 1pt;
+    border-bottom: 0.5pt solid #111;
+  }
+  h2.section.tight { margin-top: 6pt; }
+
+  /* ===== Today's agenda ===== */
+  .agenda .event {
+    display: flex;
+    margin-bottom: 3pt;
+  }
+  .agenda .time {
+    flex: 0 0 68pt;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 8.5pt;
+  }
+  .agenda .body { flex: 1; padding-left: 5pt; border-left: 0.5pt solid #555; font-size: 9pt; }
+  .agenda .body .title { font-weight: 700; }
+  .agenda .body .loc { font-style: italic; font-size: 8pt; color: #444; }
+
+  /* ===== Upcoming this week ===== */
+  .upcoming .row {
+    display: flex;
+    margin-bottom: 2pt;
+    font-size: 8.5pt;
+  }
+  .upcoming .when {
+    flex: 0 0 92pt;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .upcoming .what { flex: 1; }
+  .upcoming .what .loc { font-style: italic; font-size: 7.5pt; color: #444; }
+
+  /* ===== Tasks ===== */
+  .tasks ol { margin: 0; padding-left: 14pt; }
+  .tasks li { margin-bottom: 2pt; }
+  .tasks .title { font-weight: 700; font-size: 9pt; }
+  .tasks .meta { font-size: 7.5pt; font-style: italic; color: #444; }
+  .tasks .past-due { color: #8a0000; }
+  .tasks .past-due .title::after { content: " ★"; font-style: normal; color: #8a0000; }
+
+  /* Prayer block: CFM + names side-by-side, writing area below */
+  .prayer-box {
+    border: 0.75pt solid #111;
+    height: 105pt;
+    margin-bottom: 6pt;
+    display: flex;
+    flex-direction: column;
+  }
+  .prayer-box .top-row {
+    display: flex;
+    border-bottom: 0.5pt solid #111;
+  }
+  .prayer-box .cfm-strip {
+    flex: 1;
+    padding: 3pt 8pt;
+    text-align: center;
+    border-right: 0.5pt solid #111;
+  }
+  .prayer-box .cfm-strip .label {
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #555;
+  }
+  .prayer-box .cfm-strip .ref { font-size: 9.5pt; font-weight: 700; margin-top: 1pt; }
+  .prayer-box .cfm-strip .theme { font-style: italic; font-size: 8pt; color: #444; }
+  .prayer-box .pray-strip {
+    flex: 1;
+    padding: 3pt 8pt;
+    text-align: center;
+  }
+  .prayer-box .pray-strip .label {
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #555;
+    margin-bottom: 1pt;
+  }
+  .prayer-box .pray-strip .names {
+    font-size: 8.5pt;
+    line-height: 1.3;
+  }
+  .prayer-box .pray-strip .names .n { white-space: nowrap; margin: 0 4pt; }
+  .prayer-box .write-row {
+    flex: 1;
+    padding: 4pt 10pt;
+    display: flex;
+    flex-direction: column;
+  }
+  .prayer-box .prayer-label {
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #555;
+    text-align: center;
+    margin-bottom: 2pt;
+  }
+  .prayer-box .blank { flex: 1; }
+
+  .quote {
+    border-top: 0.5pt solid #111;
+    border-bottom: 0.5pt solid #111;
+    padding: 4pt 0;
+    margin-bottom: 4pt;
+    font-style: italic;
+    text-align: center;
+    font-size: 9.5pt;
+    line-height: 1.35;
+  }
+  .quote .attr {
+    display: block;
+    font-style: normal;
+    font-size: 8pt;
+    margin-top: 2pt;
+    color: #444;
+  }
+
+  .joke .label {
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    text-align: center;
+    margin-bottom: 2pt;
+  }
+  .joke .text {
+    font-size: 9pt;
+    text-align: center;
+    font-style: italic;
+  }
+
+  footer {
+    margin-top: 5pt;
+    padding-top: 2pt;
+    border-top: 0.5pt solid #111;
+    text-align: center;
+    font-size: 7pt;
+    font-style: italic;
+    color: #444;
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="title">The Family Dispatch</div>
+  <div class="subline">
+    <span>Vol. I &middot; No. {{ b.for_date.toordinal() % 1000 }}</span>
+    <span class="date">{{ b.for_date | date_long }}</span>
+    <span>{{ b.weather.location }}</span>
+  </div>
+</div>
+
+<div class="greeting">{{ b.greeting }}.</div>
+
+<div class="weather">
+  <span class="strong">{{ b.weather.current_f }}° now</span> &middot;
+  High <span class="strong">{{ b.weather.high_f }}°</span>, low <span class="strong">{{ b.weather.low_f }}°</span> &middot;
+  Precip <span class="strong">{{ b.weather.precip_chance_today }}%</span> &middot;
+  Sun <span class="strong">{{ b.weather.sunrise }} – {{ b.weather.sunset }}</span><br>
+  <span class="summary">{{ b.weather.summary }}.</span>
+</div>
+
+{% if b.ticker or b.countdowns %}
+<div class="stats">
+  {% if b.ticker %}
+  <div class="cell">
+    <div class="label">{{ b.ticker.symbol }} &middot; ${{ "%.2f"|format(b.ticker.price) }}</div>
+    <div class="sub">
+      7d
+      <span class="{% if b.ticker.pct_change_7d is not none and b.ticker.pct_change_7d >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_7d }}</span>
+      &middot; 30d
+      <span class="{% if b.ticker.pct_change_30d is not none and b.ticker.pct_change_30d >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_30d }}</span>
+      &middot; YTD
+      <span class="{% if b.ticker.pct_change_ytd is not none and b.ticker.pct_change_ytd >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_ytd }}</span>
+    </div>
+  </div>
+  {% endif %}
+  {% for c in b.countdowns %}
+  <div class="cell">
+    <div class="label">Countdown</div>
+    <div class="value">{{ c.days_until(b.for_date) }} days</div>
+    <div class="sub">{{ c.label }} &middot; {{ c.target.strftime("%b %-d") }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if b.year_progress %}
+<div class="year">
+  <span class="label">Year</span>
+  <div class="months">
+    {% set today_month = b.for_date.month %}
+    {% set day = b.for_date.day %}
+    {% set days_in_month = [31, 29 if (b.for_date.year % 4 == 0 and (b.for_date.year % 100 != 0 or b.for_date.year % 400 == 0)) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31] %}
+    {% for m in range(1, 13) %}
+      {% set letter = ["J","F","M","A","M","J","J","A","S","O","N","D"][m-1] %}
+      {% if m < today_month %}
+        <div class="month done">{{ letter }}</div>
+      {% elif m == today_month %}
+        {% set fill_pct = (day / days_in_month[m-1] * 100) | round %}
+        <div class="month current">
+          <div class="fill" style="width: {{ fill_pct }}%;"></div>
+          <span class="letter">{{ letter }}</span>
+        </div>
+      {% else %}
+        <div class="month">{{ letter }}</div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <span class="stat">Day {{ b.year_progress.day_of_year }} of {{ b.year_progress.days_in_year }} &middot; {{ b.year_progress.pct_label }}</span>
+</div>
+{% endif %}
+
+{# Prayer block: CFM + names side-by-side, writing area below #}
+<div class="prayer-box">
+  <div class="top-row">
+    {% if b.come_follow_me %}
+    <div class="cfm-strip">
+      <div class="label">Come Follow Me &middot; Week of {{ b.come_follow_me.week_label }}</div>
+      <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+      {% if b.come_follow_me.week_theme %}<div class="theme">{{ b.come_follow_me.week_theme }}</div>{% endif %}
+    </div>
+    {% endif %}
+    {% if b.prayer_group %}
+    <div class="pray-strip">
+      <div class="label">Pray for today</div>
+      <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="write-row">
+    <div class="prayer-label">Morning Prayer</div>
+    <div class="blank"></div>
+  </div>
+</div>
+
+<div class="body-grid">
+
+  <div class="col col-left">
+    <section class="agenda">
+      <h2 class="section">Today&rsquo;s Agenda</h2>
+      {% for e in b.events %}
+      <div class="event">
+        <div class="time">{{ e.time_range }}</div>
+        <div class="body">
+          <div class="title">{{ e.title }}</div>
+          {% if e.location %}<div class="loc">{{ e.location }}</div>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+
+    {% if b.upcoming %}
+    <section class="upcoming">
+      <h2 class="section tight">This Week</h2>
+      {% for u in b.upcoming %}
+      <div class="row">
+        <div class="when">{{ u.day_label }}{% if u.time_label %} {{ u.time_label }}{% endif %}</div>
+        <div class="what">
+          {{ u.title }}{% if u.location %} <span class="loc">&middot; {{ u.location }}</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+  </div>
+
+  <div class="col">
+    <section class="tasks">
+      <h2 class="section">Top 10 Priorities</h2>
+      <ol>
+        {% for t in b.tasks %}
+        <li class="{% if t.is_past_due %}past-due{% endif %}">
+          <span class="title">{{ t.title }}</span><br>
+          <span class="meta">
+            {% set parts = [] %}
+            {% if t.priority.value not in ("None", "") %}{% set _ = parts.append(t.priority.value) %}{% endif %}
+            {% if t.project %}{% set _ = parts.append(t.project) %}{% endif %}
+            {% if t.due %}{% set _ = parts.append("due " ~ (t.due | due) ~ (" (past due)" if t.is_past_due else "")) %}{% endif %}
+            {{ parts | join(" · ") }}
+          </span>
+        </li>
+        {% endfor %}
+      </ol>
+    </section>
+  </div>
+
+</div>
+
+<footer>Printed {{ b.for_date | date_long }} &middot; The Family Dispatch</footer>
+
+</body>
+</html>

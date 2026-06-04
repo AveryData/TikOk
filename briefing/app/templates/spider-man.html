@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>THE DAILY BUGLE — {{ b.for_date | date_short }}</title>
+<style>
+  @page {
+    size: Letter;
+    margin: 0.35in 0.45in 0.35in 0.45in;
+  }
+  html, body {
+    font-family: "DejaVu Sans", "Liberation Sans", sans-serif;
+    color: #0a0a0a;
+    background: #fdf6d8;
+  }
+  body { font-size: 9pt; line-height: 1.3; margin: 0; }
+
+  /* Halftone dot background */
+  .halftone {
+    background-image: radial-gradient(circle, #d8b800 0.4pt, transparent 0.5pt);
+    background-size: 5pt 5pt;
+  }
+
+  /* ===== Masthead ===== */
+  .masthead {
+    border: 2pt solid #0a0a0a;
+    background: #e62429;
+    color: #fff;
+    text-align: center;
+    padding: 6pt 12pt;
+    margin-bottom: 5pt;
+    position: relative;
+    box-shadow: 3pt 3pt 0 #0a0a0a;
+  }
+  .masthead .pre {
+    font-size: 7.5pt;
+    letter-spacing: 0.32em;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+  .masthead .title {
+    font-size: 28pt;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    margin: 3pt 0 2pt 0;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow:
+      1.2pt 1.2pt 0 #0a0a0a,
+      -1pt 0 0 #1d5cb8,
+      1pt 0 0 #1d5cb8;
+  }
+  .masthead .below {
+    font-size: 8pt;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  /* Speech bubble */
+  .bubble {
+    background: #fff;
+    border: 1.5pt solid #0a0a0a;
+    border-radius: 14pt;
+    padding: 4pt 14pt;
+    margin: 0 auto 5pt auto;
+    max-width: none;
+    text-align: center;
+    position: relative;
+    font-size: 9pt;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .bubble::after {
+    content: "";
+    position: absolute;
+    bottom: -7pt;
+    left: 30pt;
+    border: 4pt solid transparent;
+    border-top-color: #0a0a0a;
+  }
+  .bubble::before {
+    content: "";
+    position: absolute;
+    bottom: -5pt;
+    left: 31pt;
+    border: 3pt solid transparent;
+    border-top-color: #fff;
+    z-index: 1;
+  }
+  .bubble .who { color: #e62429; font-size: 7pt; letter-spacing: 0.18em; display: block; margin-bottom: 1pt; }
+
+  /* ===== Stats: comic panels ===== */
+  .panels {
+    display: flex;
+    gap: 5pt;
+    margin-bottom: 5pt;
+  }
+  .panels .panel {
+    flex: 1;
+    border: 1.5pt solid #0a0a0a;
+    padding: 4pt 6pt 5pt 6pt;
+    box-shadow: 2pt 2pt 0 #0a0a0a;
+    background: #fff;
+  }
+  .panels .panel.red { background: #e62429; color: #fff; }
+  .panels .panel.blue { background: #1d5cb8; color: #fff; }
+  .panels .panel.yellow { background: #ffce00; color: #0a0a0a; }
+  .panels .label {
+    font-size: 7pt;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 900;
+  }
+  .panels .value { font-size: 13pt; font-weight: 900; line-height: 1.05; margin-top: 1pt; }
+  .panels .sub { font-size: 7.5pt; margin-top: 1pt; font-weight: 700; }
+  .panels .pos { color: #2cb14a; }
+  .panels .neg { color: #0a0a0a; }
+  .panels .panel.red .pos, .panels .panel.red .neg { color: #fff; }
+
+  /* Year as a comic POW! bar */
+  .year {
+    display: flex;
+    align-items: center;
+    gap: 8pt;
+    padding: 4pt 8pt;
+    margin-bottom: 5pt;
+    border: 1.5pt solid #0a0a0a;
+    background: #fff;
+    box-shadow: 2pt 2pt 0 #0a0a0a;
+  }
+  .year .label { font-size: 7pt; letter-spacing: 0.18em; font-weight: 900; text-transform: uppercase; flex: 0 0 auto; color: #e62429; }
+  .year .bar { flex: 1; height: 11pt; background: #fff; border: 1pt solid #0a0a0a; position: relative; }
+  .year .bar .fill {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    background: repeating-linear-gradient(45deg,
+      #e62429 0, #e62429 3pt,
+      #1d5cb8 3pt, #1d5cb8 6pt);
+  }
+  .year .stat { font-size: 9pt; font-weight: 900; flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+
+  /* Body grid: two comic panels side by side */
+  .body-grid { display: flex; gap: 8pt; margin-bottom: 5pt; }
+  .body-grid .col { flex: 1; }
+  .body-grid .panel {
+    border: 1.5pt solid #0a0a0a;
+    padding: 5pt 8pt 7pt 8pt;
+    background: #fff;
+    box-shadow: 2pt 2pt 0 #0a0a0a;
+    position: relative;
+  }
+
+  h2.sect {
+    background: #1d5cb8;
+    color: #ffce00;
+    font-size: 9pt;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 3pt 6pt;
+    margin: -5pt -8pt 5pt -8pt;
+    text-align: center;
+    border-bottom: 1.5pt solid #0a0a0a;
+  }
+  h2.sect.red { background: #e62429; color: #fff; }
+
+  /* events */
+  .agenda .row { display: flex; margin-bottom: 3pt; font-size: 9pt; }
+  .agenda .row .t {
+    flex: 0 0 60pt;
+    font-weight: 900;
+    color: #e62429;
+    font-variant-numeric: tabular-nums;
+    font-size: 8.5pt;
+    text-transform: uppercase;
+  }
+  .agenda .row .body { flex: 1; }
+  .agenda .row .body .title { font-weight: 900; }
+  .agenda .row .body .loc { font-size: 8pt; color: #555; font-style: italic; }
+
+  /* upcoming */
+  .upcoming .row { display: flex; margin-bottom: 2pt; font-size: 8.5pt; }
+  .upcoming .row .w { flex: 0 0 96pt; font-weight: 900; color: #1d5cb8; font-size: 8pt; text-transform: uppercase; white-space: nowrap; }
+  .upcoming .row .body { flex: 1; }
+
+  /* task list */
+  .tasks .row { display: flex; margin-bottom: 3pt; font-size: 9pt; line-height: 1.3; }
+  .tasks .num {
+    flex: 0 0 22pt;
+    background: #ffce00;
+    color: #0a0a0a;
+    text-align: center;
+    font-weight: 900;
+    font-size: 9pt;
+    height: 16pt;
+    line-height: 16pt;
+    margin-right: 4pt;
+    border: 1pt solid #0a0a0a;
+  }
+  .tasks .body { flex: 1; }
+  .tasks .body .title { font-weight: 900; }
+  .tasks .body .meta { font-size: 7.5pt; color: #555; text-transform: uppercase; letter-spacing: 0.03em; }
+  .tasks .danger .num { background: #e62429; color: #fff; }
+  .tasks .danger .title { color: #e62429; }
+  .tasks .danger .title::after {
+    content: "  POW!";
+    background: #ffce00;
+    color: #e62429;
+    padding: 0 4pt;
+    border: 1pt solid #0a0a0a;
+    font-size: 8pt;
+    letter-spacing: 0.06em;
+    margin-left: 4pt;
+  }
+
+  /* CFM */
+  .codex {
+    text-align: center;
+    padding: 4pt 8pt;
+    margin-bottom: 5pt;
+    border: 1.5pt solid #0a0a0a;
+    background: #ffce00;
+    box-shadow: 2pt 2pt 0 #0a0a0a;
+  }
+  .codex .label { font-size: 7pt; text-transform: uppercase; letter-spacing: 0.2em; font-weight: 900; }
+  .codex .ref { font-size: 11pt; font-weight: 900; margin: 1pt 0; }
+  .codex .theme { font-style: italic; font-size: 8.5pt; font-weight: 700; }
+  .codex .today { font-size: 8.5pt; margin-top: 1pt; font-weight: 700; }
+
+  /* Prayer block: red label header → CFM + names side-by-side → full-width writing area */
+  .thought-cloud {
+    border: 1.5pt solid #0a0a0a;
+    height: 130pt;
+    margin-bottom: 6pt;
+    background: #fff;
+    box-shadow: 2pt 2pt 0 #0a0a0a;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .thought-cloud .label {
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    background: #e62429;
+    color: #fff;
+    text-align: center;
+    padding: 2pt 0;
+    font-weight: 900;
+    border-bottom: 1.5pt solid #0a0a0a;
+  }
+  .thought-cloud .top-row {
+    display: flex;
+    border-bottom: 1.5pt solid #0a0a0a;
+  }
+  .thought-cloud .cfm-inset {
+    flex: 1;
+    text-align: center;
+    padding: 4pt 6pt;
+    border-right: 1pt solid #0a0a0a;
+  }
+  .thought-cloud .cfm-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.18em; color: #1d5cb8; font-weight: 900; }
+  .thought-cloud .cfm-inset .ref { font-size: 9pt; font-weight: 900; margin-top: 1pt; }
+  .thought-cloud .pray-inset {
+    flex: 1;
+    text-align: center;
+    padding: 4pt 6pt;
+    background: #ffce00;
+  }
+  .thought-cloud .pray-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.16em; color: #e62429; font-weight: 900; margin-bottom: 1pt; }
+  .thought-cloud .pray-inset .names { font-size: 8pt; font-weight: 700; line-height: 1.3; }
+  .thought-cloud .pray-inset .names .n { white-space: nowrap; }
+  .thought-cloud .write-row {
+    flex: 1;
+    padding: 4pt 10pt;
+  }
+  .thought-cloud .sub-label {
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #e62429;
+    text-align: center;
+    font-weight: 900;
+    margin-bottom: 2pt;
+  }
+  .thought-cloud .lines {
+    flex: 1;
+  }
+
+  .wisdom {
+    border: 1.5pt solid #0a0a0a;
+    padding: 6pt 10pt;
+    margin-bottom: 5pt;
+    text-align: center;
+    font-size: 10pt;
+    font-weight: 700;
+    background: #1d5cb8;
+    color: #fff;
+    box-shadow: 2pt 2pt 0 #0a0a0a;
+    font-style: italic;
+  }
+  .wisdom .attr { display: block; font-style: normal; font-size: 8pt; margin-top: 2pt; color: #ffce00; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  .zinger {
+    padding: 5pt 10pt;
+    border: 1.5pt solid #0a0a0a;
+    background: #ffce00;
+    box-shadow: 2pt 2pt 0 #0a0a0a;
+  }
+  .zinger .label { font-size: 7pt; text-transform: uppercase; letter-spacing: 0.18em; text-align: center; font-weight: 900; color: #e62429; margin-bottom: 2pt; }
+  .zinger .text { font-size: 9pt; text-align: center; font-weight: 700; }
+
+  footer {
+    margin-top: 5pt;
+    padding: 3pt 0;
+    border: 1.5pt solid #0a0a0a;
+    background: #0a0a0a;
+    color: #ffce00;
+    text-align: center;
+    font-size: 8pt;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    box-shadow: 2pt 2pt 0 #555;
+  }
+</style>
+</head>
+<body class="halftone">
+
+<div class="masthead">
+  <div class="pre">— Your Friendly Neighborhood Briefing —</div>
+  <div class="title">The Daily Bugle</div>
+  <div class="below">Issue #{{ b.year_progress.day_of_year if b.year_progress else 1 }} &middot; {{ b.for_date | date_long }} &middot; {{ b.weather.location }}</div>
+</div>
+
+<div class="bubble">
+  <span class="who">— Spidey —</span>
+  WHOA! {{ b.greeting }}. Let's see what kinda mess we've got today!
+</div>
+
+<div class="panels">
+  <div class="panel red">
+    <div class="label">Sky Watch</div>
+    <div class="value">{{ b.weather.current_f }}°F</div>
+    <div class="sub">HI {{ b.weather.high_f }} / LO {{ b.weather.low_f }} · {{ b.weather.precip_chance_today }}% RAIN</div>
+  </div>
+  <div class="panel blue">
+    <div class="label">Wall St · {{ b.ticker.symbol if b.ticker else 'SPY' }}</div>
+    <div class="value">${{ "%.2f"|format(b.ticker.price) if b.ticker else '—' }}</div>
+    <div class="sub">
+      {% if b.ticker %}
+      WK <span class="pos">{{ b.ticker.label_7d }}</span> ·
+      MO <span class="pos">{{ b.ticker.label_30d }}</span> ·
+      YR <span class="pos">{{ b.ticker.label_ytd }}</span>
+      {% endif %}
+    </div>
+  </div>
+  {% for c in b.countdowns %}
+  <div class="panel yellow">
+    <div class="label">Crisis Clock</div>
+    <div class="value">T-{{ c.days_until(b.for_date) }} DAYS</div>
+    <div class="sub">{{ c.label | upper }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if b.year_progress %}
+<div class="year">
+  <span class="label">★ Year</span>
+  <div class="bar"><div class="fill" style="width: {{ b.year_progress.pct | round }}%;"></div></div>
+  <span class="stat">DAY {{ b.year_progress.day_of_year }} / {{ b.year_progress.days_in_year }} · {{ b.year_progress.pct_label }}</span>
+</div>
+{% endif %}
+
+{# Prayer bubble above body-grid — CFM + names side-by-side, writing space below #}
+<div class="thought-cloud">
+  <div class="label">★ Peter's Prayer Bubble ★</div>
+  <div class="top-row">
+    {% if b.come_follow_me %}
+    <div class="cfm-inset">
+      <div class="lbl">★ Origin Story · Week of {{ b.come_follow_me.week_label }} ★</div>
+      <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+    </div>
+    {% endif %}
+    {% if b.prayer_group %}
+    <div class="pray-inset">
+      <div class="lbl">★ Friendly Neighborhood Watch ★</div>
+      <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="write-row">
+    <div class="sub-label">★ Today's web of words ★</div>
+    <div class="lines"></div>
+  </div>
+</div>
+
+<div class="body-grid">
+
+  <div class="col">
+    <div class="panel">
+      <h2 class="sect">★ Spidey-Sense Schedule ★</h2>
+      <div class="agenda">
+        {% for e in b.events %}
+        <div class="row">
+          <div class="t">{{ e.time_range | replace('am','A') | replace('pm','P') | upper }}</div>
+          <div class="body">
+            <div class="title">{{ e.title }}</div>
+            {% if e.location %}<div class="loc">@ {{ e.location }}</div>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% if b.upcoming %}
+    <div class="panel" style="margin-top: 5pt;">
+      <h2 class="sect red">★ Web of Upcoming Events ★</h2>
+      <div class="upcoming">
+        {% for u in b.upcoming %}
+        <div class="row">
+          <div class="w">{{ u.day_label | upper }}{% if u.time_label %} · {{ u.time_label }}{% endif %}</div>
+          <div class="body">{{ u.title }}{% if u.location %} <em style="color:#555;font-size:8pt">@ {{ u.location }}</em>{% endif %}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col">
+    <div class="panel">
+      <h2 class="sect">★ Top 10 Heroic Deeds ★</h2>
+      <div class="tasks">
+        {% for t in b.tasks %}
+        <div class="row {% if t.is_past_due %}danger{% endif %}">
+          <div class="num">{{ "%02d"|format(loop.index) }}</div>
+          <div class="body">
+            <span class="title">{{ t.title }}</span><br>
+            <span class="meta">
+              {{ t.priority.value }}{% if t.project %} · {{ t.project }}{% endif %}{% if t.due %} · due {{ t.due | due }}{% endif %}
+            </span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<footer>
+  ★ With Great Power Comes Great Briefing · {{ b.for_date | date_short }} ★
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Field Notes — {{ b.for_date | date_short }}</title>
+<style>
+  @page {
+    size: Letter;
+    margin: 0.45in 0.65in 0.4in 0.65in;
+  }
+  html, body {
+    font-family: "Liberation Serif", "Charter", "Georgia", serif;
+    color: #2a1c0a;
+    background: #f6efdd;
+  }
+  body { font-size: 9pt; line-height: 1.35; margin: 0; }
+
+  /* ===== Masthead ===== */
+  .masthead {
+    text-align: center;
+    padding-bottom: 5pt;
+    margin-bottom: 6pt;
+    border-bottom: 0.5pt solid #2a1c0a;
+    position: relative;
+  }
+  .masthead .pre {
+    font-style: italic;
+    font-size: 9pt;
+    letter-spacing: 0.04em;
+    color: #5a3d12;
+  }
+  .masthead .title {
+    font-size: 18pt;
+    font-style: italic;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.05;
+    margin-top: 2pt;
+  }
+  .masthead .title .amp { color: #5a3d12; font-style: normal; }
+  .masthead .meta {
+    margin-top: 3pt;
+    font-style: italic;
+    font-size: 8.5pt;
+    color: #5a3d12;
+  }
+  .masthead .vol {
+    font-style: italic;
+    font-size: 8pt;
+    color: #5a3d12;
+    margin-top: 1pt;
+  }
+
+  /* ===== Opening field entry ===== */
+  .field-entry {
+    font-style: italic;
+    text-align: justify;
+    font-size: 9pt;
+    line-height: 1.4;
+    margin: 3pt 0 5pt 0;
+    text-indent: 14pt;
+  }
+  .field-entry .vmark {
+    font-style: normal;
+    color: #5a3d12;
+    font-variant: small-caps;
+    font-weight: 700;
+    font-size: 9pt;
+    letter-spacing: 0.08em;
+    margin-right: 4pt;
+  }
+  .field-entry strong { color: #2a1c0a; font-style: normal; font-weight: 700; }
+
+  /* ===== Atmospheric/stats observations ===== */
+  .observations {
+    border-top: 0.5pt solid #2a1c0a;
+    border-bottom: 0.5pt solid #2a1c0a;
+    padding: 4pt 0;
+    margin-bottom: 5pt;
+    font-size: 8.5pt;
+    line-height: 1.4;
+  }
+  .observations .obs {
+    display: flex;
+    margin-bottom: 2pt;
+  }
+  .observations .obs .col {
+    flex: 1;
+    padding-right: 12pt;
+  }
+  .observations .obs .col:last-child { padding-right: 0; }
+  .observations .lbl {
+    font-variant: small-caps;
+    letter-spacing: 0.12em;
+    color: #5a3d12;
+    font-size: 7.5pt;
+    margin-right: 4pt;
+  }
+  .observations strong { font-weight: 700; }
+  .observations .pos { color: #2e5a1a; font-weight: 700; }
+  .observations .neg { color: #6e1a10; font-weight: 700; }
+
+  /* ===== Year mark ===== */
+  .year-mark {
+    text-align: center;
+    font-style: italic;
+    font-size: 8.5pt;
+    color: #5a3d12;
+    padding-bottom: 4pt;
+    border-bottom: 0.5pt solid #2a1c0a;
+    margin-bottom: 5pt;
+  }
+  .year-mark .bar {
+    display: inline-block;
+    width: 180pt;
+    height: 5pt;
+    border: 0.4pt solid #2a1c0a;
+    position: relative;
+    vertical-align: -1pt;
+    margin: 0 4pt;
+  }
+  .year-mark .bar .fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: #5a3d12;
+  }
+
+  /* ===== Two-column body ===== */
+  .body-grid {
+    display: flex;
+    gap: 16pt;
+    border-bottom: 0.5pt solid #2a1c0a;
+    padding-bottom: 5pt;
+    margin-bottom: 5pt;
+  }
+  .body-grid .col { flex: 1; }
+  .body-grid .col-left  { border-right: 0.5pt solid #2a1c0a; padding-right: 16pt; }
+
+  h2.section {
+    text-align: center;
+    font-size: 8pt;
+    font-variant: small-caps;
+    letter-spacing: 0.18em;
+    color: #5a3d12;
+    margin: 0 0 4pt 0;
+    padding: 0 0 2pt 0;
+    font-style: italic;
+  }
+  h2.section .ornament { color: #8b6c3f; margin: 0 6pt; }
+  h2.section.tight { margin-top: 6pt; }
+
+  /* ===== Entries (events as observations, tasks as specimens) ===== */
+  .entries .entry {
+    display: flex;
+    margin-bottom: 3pt;
+    font-size: 9pt;
+    line-height: 1.32;
+  }
+  .entries .n {
+    flex: 0 0 22pt;
+    text-align: right;
+    color: #5a3d12;
+    font-variant: small-caps;
+    font-style: italic;
+    padding-right: 5pt;
+    letter-spacing: 0.04em;
+  }
+  .entries .text { flex: 1; }
+  .entries .text .lead { font-style: italic; color: #5a3d12; }
+  .entries .text .what { font-weight: 700; }
+  .entries .text .meta { font-style: italic; font-size: 8pt; color: #5a3d12; }
+  .entries .past-due .what { color: #6e1a10; }
+  .entries .past-due .what::after { content: " †"; }
+
+  /* ===== Scripture / Come Follow Me ===== */
+  .cfm {
+    text-align: center;
+    padding: 3pt 0;
+    margin-bottom: 5pt;
+    border-top: 0.5pt solid #2a1c0a;
+    border-bottom: 0.5pt solid #2a1c0a;
+  }
+  .cfm .label { font-size: 7.5pt; font-variant: small-caps; letter-spacing: 0.22em; color: #5a3d12; font-style: italic; }
+  .cfm .ref { font-size: 10pt; font-weight: 700; margin: 1pt 0; }
+  .cfm .theme { font-style: italic; font-size: 8.5pt; color: #5a3d12; }
+  .cfm .today { font-size: 8.5pt; margin-top: 1pt; }
+
+  .meditation-box {
+    border: 0.75pt solid #2a1c0a;
+    height: 115pt;
+    margin-bottom: 6pt;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255,255,255,0.35);
+    overflow: hidden;
+  }
+  .meditation-box .top-row {
+    display: flex;
+    border-bottom: 0.4pt solid #2a1c0a;
+  }
+  .meditation-box .cfm-inset {
+    flex: 1;
+    text-align: center;
+    padding: 3pt 8pt;
+    border-right: 0.4pt solid #2a1c0a;
+  }
+  .meditation-box .cfm-inset .lbl { font-size: 6.5pt; font-variant: small-caps; letter-spacing: 0.22em; color: #5a3d12; font-style: italic; }
+  .meditation-box .cfm-inset .ref { font-size: 9.5pt; font-weight: 700; margin-top: 1pt; }
+  .meditation-box .pray-inset {
+    flex: 1;
+    text-align: center;
+    padding: 3pt 8pt;
+  }
+  .meditation-box .pray-inset .lbl { font-size: 6.5pt; font-variant: small-caps; letter-spacing: 0.22em; color: #5a3d12; font-style: italic; margin-bottom: 1pt; }
+  .meditation-box .pray-inset .names { font-size: 9pt; font-style: italic; }
+  .meditation-box .pray-inset .names .n { white-space: nowrap; margin: 0 3pt; }
+  .meditation-box .write-row {
+    flex: 1;
+    padding: 4pt 11pt;
+    display: flex;
+    flex-direction: column;
+  }
+  .meditation-box .label {
+    font-size: 7pt;
+    font-variant: small-caps;
+    letter-spacing: 0.22em;
+    color: #5a3d12;
+    text-align: center;
+    font-style: italic;
+    margin-bottom: 2pt;
+  }
+  .meditation-box .lines { flex: 1; }
+
+  .aphorism {
+    border-top: 0.5pt solid #2a1c0a;
+    border-bottom: 0.5pt solid #2a1c0a;
+    padding: 4pt 0;
+    margin-bottom: 4pt;
+    text-align: center;
+    font-size: 9.5pt;
+    line-height: 1.35;
+    font-style: italic;
+  }
+  .aphorism .attr {
+    display: block;
+    font-style: normal;
+    font-size: 8.5pt;
+    margin-top: 2pt;
+    color: #5a3d12;
+    font-variant: small-caps;
+    letter-spacing: 0.06em;
+  }
+
+  .amusement .label {
+    font-size: 7.5pt;
+    font-variant: small-caps;
+    letter-spacing: 0.22em;
+    text-align: center;
+    margin-bottom: 1pt;
+    color: #5a3d12;
+    font-style: italic;
+  }
+  .amusement .text { font-size: 9pt; text-align: center; font-style: italic; }
+
+  footer {
+    margin-top: 6pt;
+    padding-top: 3pt;
+    border-top: 0.5pt solid #2a1c0a;
+    text-align: center;
+    font-size: 8pt;
+    font-style: italic;
+    color: #5a3d12;
+    letter-spacing: 0.04em;
+  }
+  footer .sig { font-variant: small-caps; letter-spacing: 0.12em; }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="pre">From the journal of a naturalist</div>
+  <div class="title">Field Notes <span class="amp">&amp;</span> Observations</div>
+  <div class="meta">{{ b.weather.location }} &middot; Lat. 40°20′N, Long. 111°43′W &middot; {{ b.for_date | date_long }}</div>
+  <div class="vol">Vol. I · Entry No. {{ b.year_progress.day_of_year if b.year_progress else 1 }}</div>
+</div>
+
+<p class="field-entry">
+  <span class="vmark">i.</span>
+  At {{ b.weather.location.split(',')[0] }}: <strong>{{ b.weather.current_f }}°F</strong> at dawn, foretold high <strong>{{ b.weather.high_f }}°</strong> &middot; low <strong>{{ b.weather.low_f }}°</strong> &middot; rain <strong>{{ b.weather.precip_chance_today }}%</strong> &middot; sun {{ b.weather.sunrise }}–{{ b.weather.sunset }}. &nbsp; <em>{{ b.greeting }}.</em>
+</p>
+
+{% if b.ticker or b.countdowns %}
+<div class="observations">
+  {% if b.ticker %}
+  <div class="obs">
+    <div class="col">
+      <span class="lbl">Markets observed —</span>
+      The standard <strong>{{ b.ticker.symbol }}</strong> stood at <strong>${{ "%.2f"|format(b.ticker.price) }}</strong>. Over seven days,
+      <span class="{% if b.ticker.pct_change_7d is not none and b.ticker.pct_change_7d >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_7d }}</span>;
+      thirty days,
+      <span class="{% if b.ticker.pct_change_30d is not none and b.ticker.pct_change_30d >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_30d }}</span>;
+      annum,
+      <span class="{% if b.ticker.pct_change_ytd is not none and b.ticker.pct_change_ytd >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_ytd }}</span>.
+    </div>
+  </div>
+  {% endif %}
+  {% for c in b.countdowns %}
+  <div class="obs">
+    <div class="col">
+      <span class="lbl">Expeditions pending —</span>
+      <strong>{{ c.days_until(b.for_date) }} days</strong> remain unto the trial of <strong>{{ c.label }}</strong>, set upon {{ c.target.strftime("%d %B %Y") }}.
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if b.year_progress %}
+<div class="year-mark">
+  Of the {{ b.year_progress.days_in_year }} days appointed to this year, <strong>{{ b.year_progress.day_of_year }}</strong> have been recorded —
+  <span class="bar"><span class="fill" style="width: {{ b.year_progress.pct | round }}%"></span></span>
+  even <strong>{{ b.year_progress.pct_label }}</strong>.
+</div>
+{% endif %}
+
+{# Meditation block: scripture notes + meditation subjects side-by-side, writing area below #}
+<div class="meditation-box">
+  <div class="top-row">
+    {% if b.come_follow_me %}
+    <div class="cfm-inset">
+      <div class="lbl">— Notes from the Scriptures · {{ b.come_follow_me.week_label }} —</div>
+      <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+    </div>
+    {% endif %}
+    {% if b.prayer_group %}
+    <div class="pray-inset">
+      <div class="lbl">— Subjects of meditation this day —</div>
+      <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="write-row">
+    <div class="label">Daily Meditation</div>
+    <div class="lines"></div>
+  </div>
+</div>
+
+<div class="body-grid">
+
+  <div class="col col-left">
+    <section class="entries">
+      <h2 class="section"><span class="ornament">❦</span>Field Survey of the Day<span class="ornament">❦</span></h2>
+      {% for e in b.events %}
+      <div class="entry">
+        <div class="n">{{ ['i','ii','iii','iv','v','vi','vii','viii','ix','x','xi','xii'][loop.index0] | default(loop.index|string) }}.</div>
+        <div class="text">
+          {% if e.start and not e.all_day %}
+          <span class="lead">At {{ e.start.strftime("%H").lstrip("0") or "0" }}:{{ e.start.strftime("%M") }} hrs —</span>
+          {% endif %}
+          <span class="what">{{ e.title }}</span>
+          {% if e.location %} <span class="meta">(at {{ e.location }})</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+
+    {% if b.upcoming %}
+    <section class="entries">
+      <h2 class="section tight"><span class="ornament">✦</span>Forthcoming Expeditions<span class="ornament">✦</span></h2>
+      {% for u in b.upcoming %}
+      <div class="entry">
+        <div class="n">{{ ['i','ii','iii','iv','v','vi','vii','viii','ix','x'][loop.index0] | default(loop.index|string) }}.</div>
+        <div class="text">
+          <span class="lead">{{ u.day_label }}{% if u.time_label %}, {{ u.time_label }}{% endif %} —</span>
+          <span class="what">{{ u.title }}</span>{% if u.location %} <span class="meta">(at {{ u.location }})</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+  </div>
+
+  <div class="col">
+    <section class="entries">
+      <h2 class="section"><span class="ornament">§</span>Specimens Under Examination<span class="ornament">§</span></h2>
+      {% for t in b.tasks %}
+      <div class="entry {% if t.is_past_due %}past-due{% endif %}">
+        <div class="n">{{ ['i','ii','iii','iv','v','vi','vii','viii','ix','x'][loop.index0] | default(loop.index|string) }}.</div>
+        <div class="text">
+          <span class="what">{{ t.title }}</span><br>
+          <span class="meta">
+            Order: {{ t.priority.value }}{% if t.project %} · Genus: {{ t.project }}{% endif %}{% if t.due %} · catalogued for {{ t.due | due }}{% if t.is_past_due %} (the date hath passed){% endif %}{% endif %}
+          </span>
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+  </div>
+
+</div>
+
+
+<footer>
+  Recorded {{ b.for_date | date_long }} &middot; <span class="sig">Signed, the observer.</span>
+</footer>
+
+</body>
+</html>

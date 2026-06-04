@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hawkins Daily Bulletin — {{ b.for_date | date_short }}</title>
+<style>
+  @page {
+    size: Letter;
+    margin: 0.35in 0.5in 0.35in 0.5in;
+  }
+  html, body {
+    font-family: "DejaVu Sans", "Liberation Sans", sans-serif;
+    color: #0a0a14;
+    background: #f4f0e6;
+  }
+  body { font-size: 9pt; line-height: 1.3; margin: 0; }
+
+  /* ===== Masthead — black panel, red title ===== */
+  .masthead {
+    background: #0a0a14;
+    color: #f4f0e6;
+    text-align: center;
+    padding: 10pt 12pt 8pt 12pt;
+    border: 1.5pt solid #0a0a14;
+    margin-bottom: 6pt;
+    position: relative;
+  }
+  .masthead::before, .masthead::after {
+    content: "";
+    position: absolute;
+    left: 12pt; right: 12pt;
+    height: 1pt;
+    background: repeating-linear-gradient(to right, #b80000 0, #b80000 4pt, transparent 4pt, transparent 8pt);
+  }
+  .masthead::before { top: 3pt; }
+  .masthead::after { bottom: 3pt; }
+  .masthead .above {
+    font-size: 7pt;
+    letter-spacing: 0.32em;
+    color: #b80000;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .masthead .title {
+    color: #b80000;
+    font-size: 30pt;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    margin: 4pt 0 2pt 0;
+    text-transform: uppercase;
+    text-shadow: 1pt 1pt 0 #4a0000;
+  }
+  .masthead .below {
+    font-size: 8pt;
+    letter-spacing: 0.18em;
+    color: #f4f0e6;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .masthead .below .case { color: #b80000; }
+
+  .transmission {
+    text-align: center;
+    font-size: 9pt;
+    font-style: italic;
+    color: #1a1a2e;
+    padding: 4pt 0;
+    margin-bottom: 4pt;
+    border-bottom: 1pt solid #0a0a14;
+  }
+  .transmission .from { font-style: normal; font-weight: 700; color: #b80000; letter-spacing: 0.08em; text-transform: uppercase; font-size: 7.5pt; }
+
+  /* ===== Sitrep panels ===== */
+  .panels {
+    display: flex;
+    gap: 6pt;
+    margin-bottom: 5pt;
+  }
+  .panels .panel {
+    flex: 1;
+    border: 1pt solid #0a0a14;
+    padding: 4pt 7pt 5pt 7pt;
+    background: rgba(255,255,255,0.4);
+  }
+  .panels .panel .label {
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #b80000;
+    font-weight: 700;
+    margin-bottom: 2pt;
+  }
+  .panels .panel .value { font-size: 11pt; font-weight: 700; line-height: 1.05; }
+  .panels .panel .sub { font-size: 7.5pt; margin-top: 1pt; color: #1a1a2e; }
+  .panels .pos { color: #1a5e1a; font-weight: 700; }
+  .panels .neg { color: #b80000; font-weight: 700; }
+
+  /* ===== Year as a synth-grid bar ===== */
+  .year {
+    display: flex;
+    align-items: center;
+    gap: 8pt;
+    padding: 4pt 0;
+    margin-bottom: 4pt;
+    border-top: 1pt solid #0a0a14;
+    border-bottom: 1pt solid #0a0a14;
+  }
+  .year .label {
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #b80000;
+    font-weight: 700;
+    flex: 0 0 auto;
+  }
+  .year .bar {
+    flex: 1;
+    height: 9pt;
+    background: #0a0a14;
+    position: relative;
+  }
+  .year .bar .fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: repeating-linear-gradient(to right,
+      #b80000 0, #b80000 3pt,
+      #4a0000 3pt, #4a0000 6pt);
+  }
+  .year .stat {
+    font-size: 8pt;
+    font-weight: 700;
+    color: #0a0a14;
+    flex: 0 0 auto;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ===== Two-column body ===== */
+  .body-grid {
+    display: flex;
+    gap: 10pt;
+    margin-bottom: 5pt;
+  }
+  .body-grid .col { flex: 1; }
+  .body-grid .panel {
+    border: 1pt solid #0a0a14;
+    padding: 4pt 8pt 6pt 8pt;
+    background: rgba(255,255,255,0.4);
+  }
+
+  h2.sect {
+    background: #0a0a14;
+    color: #b80000;
+    font-size: 8pt;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 3pt 6pt;
+    margin: -4pt -8pt 5pt -8pt;
+    text-align: center;
+  }
+  h2.sect.alt { background: #b80000; color: #f4f0e6; }
+
+  /* events */
+  .quest .q { display: flex; margin-bottom: 3pt; font-size: 9pt; }
+  .quest .q .t { flex: 0 0 60pt; font-weight: 700; font-variant-numeric: tabular-nums; color: #b80000; font-size: 8.5pt; }
+  .quest .q .body { flex: 1; }
+  .quest .q .body .title { font-weight: 700; }
+  .quest .q .body .loc { font-style: italic; color: #5a3d12; font-size: 8pt; }
+
+  /* upcoming */
+  .walkie .row { display: flex; margin-bottom: 2pt; font-size: 8.5pt; }
+  .walkie .w { flex: 0 0 96pt; font-weight: 700; color: #b80000; font-size: 8pt; white-space: nowrap; }
+  .walkie .body { flex: 1; }
+
+  /* tasks as a quest log */
+  .questlog .row {
+    display: flex;
+    margin-bottom: 3pt;
+    font-size: 9pt;
+    line-height: 1.3;
+  }
+  .questlog .num {
+    flex: 0 0 18pt;
+    font-weight: 900;
+    color: #b80000;
+    font-size: 9pt;
+  }
+  .questlog .body { flex: 1; }
+  .questlog .body .title { font-weight: 700; }
+  .questlog .body .meta { font-size: 7.5pt; color: #555; text-transform: uppercase; letter-spacing: 0.04em; }
+  .questlog .upside-down .title { color: #b80000; }
+  .questlog .upside-down .title::after {
+    content: " ▲ FROM THE UPSIDE DOWN";
+    font-size: 7pt;
+    background: #b80000;
+    color: #f4f0e6;
+    padding: 0 4pt;
+    margin-left: 4pt;
+    letter-spacing: 0.08em;
+  }
+
+  /* CFM */
+  .codex {
+    text-align: center;
+    padding: 4pt 0;
+    margin-bottom: 5pt;
+    border-top: 1pt solid #0a0a14;
+    border-bottom: 1pt solid #0a0a14;
+  }
+  .codex .label { font-size: 7pt; text-transform: uppercase; letter-spacing: 0.2em; color: #b80000; font-weight: 700; }
+  .codex .ref { font-size: 10pt; font-weight: 700; margin: 1pt 0; }
+  .codex .theme { font-style: italic; font-size: 8.5pt; }
+  .codex .today { font-size: 8.5pt; margin-top: 1pt; }
+
+  .walkie-box {
+    border: 1pt solid #0a0a14;
+    height: 120pt;
+    margin-bottom: 6pt;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255,255,255,0.5);
+    overflow: hidden;
+  }
+  .walkie-box .label {
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    background: #0a0a14;
+    color: #b80000;
+    text-align: center;
+    padding: 2pt 0;
+    margin: 0;
+    font-weight: 700;
+  }
+  .walkie-box .top-row {
+    display: flex;
+    border-bottom: 0.5pt dashed #b80000;
+  }
+  .walkie-box .cfm-inset {
+    flex: 1;
+    text-align: center;
+    padding: 3pt 8pt;
+    border-right: 0.5pt dashed #b80000;
+  }
+  .walkie-box .cfm-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.2em; color: #b80000; font-weight: 700; }
+  .walkie-box .cfm-inset .ref { font-size: 9.5pt; font-weight: 700; margin-top: 1pt; color: #0a0a14; }
+  .walkie-box .pray-inset {
+    flex: 1;
+    text-align: center;
+    padding: 3pt 8pt;
+  }
+  .walkie-box .pray-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.2em; color: #b80000; font-weight: 700; margin-bottom: 1pt; }
+  .walkie-box .pray-inset .names { font-size: 8.5pt; font-weight: 700; color: #0a0a14; }
+  .walkie-box .pray-inset .names .n { white-space: nowrap; margin: 0 3pt; }
+  .walkie-box .write-row {
+    flex: 1;
+    padding: 4pt 10pt;
+    display: flex;
+    flex-direction: column;
+  }
+  .walkie-box .sub-label {
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #b80000;
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 2pt;
+  }
+  .walkie-box .lines { flex: 1; }
+
+  .wisdom {
+    border: 1pt solid #0a0a14;
+    padding: 5pt 8pt;
+    margin-bottom: 4pt;
+    font-style: italic;
+    text-align: center;
+    font-size: 9.5pt;
+    background: rgba(255,255,255,0.5);
+  }
+  .wisdom .attr { display: block; font-style: normal; font-size: 8pt; margin-top: 2pt; color: #b80000; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  .oneliner { padding: 4pt 8pt; border: 1pt solid #0a0a14; background: rgba(255,255,255,0.5); }
+  .oneliner .label { font-size: 7pt; text-transform: uppercase; letter-spacing: 0.18em; color: #b80000; text-align: center; font-weight: 700; margin-bottom: 2pt; }
+  .oneliner .text { font-size: 9pt; text-align: center; font-style: italic; }
+
+  footer {
+    margin-top: 5pt;
+    padding-top: 3pt;
+    border-top: 1pt solid #0a0a14;
+    text-align: center;
+    font-size: 7pt;
+    color: #b80000;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="above">— Top Secret · For Eyes Only —</div>
+  <div class="title">Hawkins<br>Daily Bulletin</div>
+  <div class="below">Case No. <span class="case">{{ "%03d"|format(b.year_progress.day_of_year if b.year_progress else 1) }}</span> &middot; {{ b.for_date | date_long }} &middot; {{ b.weather.location }}</div>
+</div>
+
+<div class="transmission">
+  <span class="from">[ Eleven says: ]</span> &nbsp; {{ b.greeting }}. Friends don't lie.
+</div>
+
+<div class="panels">
+  <div class="panel">
+    <div class="label">Skies over Hawkins</div>
+    <div class="value">{{ b.weather.current_f }}°F</div>
+    <div class="sub">hi {{ b.weather.high_f }} / lo {{ b.weather.low_f }} · {{ b.weather.precip_chance_today }}% precip</div>
+  </div>
+  <div class="panel">
+    <div class="label">Stock Watch · {{ b.ticker.symbol if b.ticker else 'SPY' }}</div>
+    <div class="value">${{ "%.2f"|format(b.ticker.price) if b.ticker else '—' }}</div>
+    <div class="sub">
+      {% if b.ticker %}
+      wk <span class="{% if b.ticker.pct_change_7d >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_7d }}</span> ·
+      mo <span class="{% if b.ticker.pct_change_30d >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_30d }}</span> ·
+      yr <span class="{% if b.ticker.pct_change_ytd >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_ytd }}</span>
+      {% endif %}
+    </div>
+  </div>
+  {% for c in b.countdowns %}
+  <div class="panel">
+    <div class="label">Countdown</div>
+    <div class="value">{{ c.days_until(b.for_date) }} days</div>
+    <div class="sub">{{ c.label }} · {{ c.target.strftime("%b %-d") }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if b.year_progress %}
+<div class="year">
+  <span class="label">▲ Year</span>
+  <div class="bar"><div class="fill" style="width: {{ b.year_progress.pct | round }}%;"></div></div>
+  <span class="stat">DAY {{ b.year_progress.day_of_year }} / {{ b.year_progress.days_in_year }} · {{ b.year_progress.pct_label }}</span>
+</div>
+{% endif %}
+
+{# Outgoing transmission: codex + roster side-by-side, message area below #}
+<div class="walkie-box">
+  <div class="label">▲ Outgoing Transmission · Channel 11</div>
+  <div class="top-row">
+    {% if b.come_follow_me %}
+    <div class="cfm-inset">
+      <div class="lbl">▲ Codex · {{ b.come_follow_me.week_label }} ▲</div>
+      <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+    </div>
+    {% endif %}
+    {% if b.prayer_group %}
+    <div class="pray-inset">
+      <div class="lbl">▲ Tonight's Party Roster ▲</div>
+      <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="write-row">
+    <div class="sub-label">▲ Message to send ▲</div>
+    <div class="lines"></div>
+  </div>
+</div>
+
+<div class="body-grid">
+
+  <div class="col">
+    <div class="panel">
+      <h2 class="sect">▲ Today's Mission</h2>
+      <div class="quest">
+        {% for e in b.events %}
+        <div class="q">
+          <div class="t">{{ e.time_range | replace('am','A') | replace('pm','P') | upper }}</div>
+          <div class="body">
+            <div class="title">{{ e.title }}</div>
+            {% if e.location %}<div class="loc">@ {{ e.location }}</div>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if b.upcoming %}
+    <div class="panel" style="margin-top: 5pt;">
+      <h2 class="sect alt">▲ Walkie-Talkie Chatter · 7 Days</h2>
+      <div class="walkie">
+        {% for u in b.upcoming %}
+        <div class="row">
+          <div class="w">{{ u.day_label | upper }}{% if u.time_label %} · {{ u.time_label }}{% endif %}</div>
+          <div class="body">{{ u.title }}{% if u.location %} <em style="color:#5a3d12;font-size:8pt">· {{ u.location }}</em>{% endif %}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col">
+    <div class="panel">
+      <h2 class="sect">▲ The Party's Quest Log</h2>
+      <div class="questlog">
+        {% for t in b.tasks %}
+        <div class="row {% if t.is_past_due %}upside-down{% endif %}">
+          <div class="num">{{ "%02d"|format(loop.index) }}</div>
+          <div class="body">
+            <span class="title">{{ t.title }}</span><br>
+            <span class="meta">
+              lvl {{ t.priority.value }}{% if t.project %} · {{ t.project }}{% endif %}{% if t.due %} · due {{ t.due | due }}{% endif %}
+            </span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<footer>
+  ▲ End of Bulletin · {{ b.for_date | date_short }} ▲
+</footer>
+
+</body>
+</html>

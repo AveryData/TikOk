@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Trainer's Daily Pokédex — {{ b.for_date | date_short }}</title>
+<style>
+  @page {
+    size: Letter;
+    margin: 0.35in 0.45in 0.35in 0.45in;
+  }
+  html, body {
+    font-family: "DejaVu Sans", "Liberation Sans", sans-serif;
+    color: #0a0a0a;
+    background: #f4f9ff;
+  }
+  body { font-size: 9pt; line-height: 1.3; margin: 0; }
+
+  /* ===== Trainer card header ===== */
+  .trainer-card {
+    background: linear-gradient(180deg, #e02333 0%, #c81020 100%);
+    border: 2pt solid #0a0a0a;
+    color: #fff;
+    padding: 7pt 10pt 8pt 10pt;
+    margin-bottom: 5pt;
+    box-shadow: 2pt 2pt 0 #0a0a0a;
+    position: relative;
+  }
+  .trainer-card .pokeball {
+    position: absolute;
+    right: 10pt;
+    top: 7pt;
+    width: 26pt;
+    height: 26pt;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #fff 0%, #fff 49%, #0a0a0a 49%, #0a0a0a 51%, #e02333 51%, #c81020 100%);
+    border: 1.5pt solid #0a0a0a;
+  }
+  .trainer-card .pokeball::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 8pt;
+    height: 8pt;
+    border-radius: 50%;
+    background: #fff;
+    border: 1.5pt solid #0a0a0a;
+  }
+  .trainer-card .pre {
+    font-size: 7pt;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: #ffd92e;
+    font-weight: 900;
+  }
+  .trainer-card .title {
+    font-size: 22pt;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    line-height: 1.05;
+    margin: 2pt 0;
+    text-transform: uppercase;
+  }
+  .trainer-card .name { color: #ffd92e; }
+  .trainer-card .meta {
+    font-size: 8pt;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .trainer-card .id { color: #ffd92e; font-weight: 900; }
+
+  /* ===== Stats card ===== */
+  .stats-card {
+    border: 1.5pt solid #0a0a0a;
+    background: #fff;
+    padding: 4pt 8pt 6pt 8pt;
+    margin-bottom: 5pt;
+    box-shadow: 2pt 2pt 0 #0a0a0a;
+  }
+  .stats-card .row {
+    display: flex;
+    align-items: center;
+    gap: 6pt;
+    margin-bottom: 3pt;
+    font-size: 9pt;
+  }
+  .stats-card .lbl {
+    flex: 0 0 56pt;
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 900;
+    color: #c81020;
+  }
+  .stats-card .val { flex: 0 0 auto; font-weight: 900; font-size: 9.5pt; font-variant-numeric: tabular-nums; }
+  .stats-card .gauge {
+    flex: 1;
+    height: 7pt;
+    background: #d8d8d8;
+    border: 0.5pt solid #0a0a0a;
+    position: relative;
+  }
+  .stats-card .gauge .fill {
+    position: absolute; left: 0; top: 0; bottom: 0;
+  }
+  .stats-card .gauge.hp .fill { background: #2cb14a; }
+  .stats-card .gauge.year .fill { background: linear-gradient(to right, #ffd92e, #e02333); }
+  .stats-card .badge {
+    display: inline-block;
+    padding: 1pt 6pt;
+    font-size: 6.5pt;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1pt solid #0a0a0a;
+    border-radius: 7pt;
+    margin-right: 4pt;
+    color: #fff;
+  }
+  .type-normal   { background: #a8a878; }
+  .type-fire     { background: #f08030; }
+  .type-water    { background: #6890f0; }
+  .type-electric { background: #f8d030; color: #0a0a0a; }
+  .type-grass    { background: #78c850; }
+  .type-rock     { background: #b8a038; }
+  .type-psychic  { background: #f85888; }
+  .type-fighting { background: #c03028; }
+  .type-ghost    { background: #705898; }
+
+  .pos { color: #2cb14a; font-weight: 900; }
+  .neg { color: #c81020; font-weight: 900; }
+
+  /* ===== Two-column body ===== */
+  .body-grid { display: flex; gap: 7pt; margin-bottom: 5pt; }
+  .body-grid .col { flex: 1; }
+  .body-grid .card {
+    border: 1.5pt solid #0a0a0a;
+    background: #fff;
+    padding: 5pt 8pt 6pt 8pt;
+    box-shadow: 2pt 2pt 0 #0a0a0a;
+  }
+
+  h2.sect {
+    background: linear-gradient(180deg, #1b5cb8 0%, #0a3a8a 100%);
+    color: #ffd92e;
+    font-size: 8.5pt;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3pt 6pt;
+    margin: -5pt -8pt 5pt -8pt;
+    text-align: center;
+    border-bottom: 1.5pt solid #0a0a0a;
+  }
+  h2.sect.green { background: linear-gradient(180deg, #4a9c4a 0%, #2e6b2e 100%); }
+
+  /* Today's battles (events) */
+  .battles .row { display: flex; margin-bottom: 3pt; font-size: 9pt; }
+  .battles .row .t {
+    flex: 0 0 58pt;
+    background: #1b5cb8;
+    color: #fff;
+    font-weight: 900;
+    font-size: 7.5pt;
+    text-align: center;
+    padding: 1pt 0;
+    margin-right: 5pt;
+    border: 1pt solid #0a0a0a;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .battles .row .body { flex: 1; }
+  .battles .row .body .title { font-weight: 900; }
+  .battles .row .body .loc { font-size: 8pt; color: #555; font-style: italic; }
+
+  /* Upcoming (wild encounters) */
+  .wild .row { display: flex; margin-bottom: 2pt; font-size: 8.5pt; }
+  .wild .row .w {
+    flex: 0 0 100pt;
+    font-weight: 900;
+    color: #4a9c4a;
+    font-size: 8pt;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .wild .row .body { flex: 1; }
+
+  /* Pokédex tasks */
+  .dex .row {
+    display: flex;
+    margin-bottom: 3pt;
+    font-size: 9pt;
+    line-height: 1.25;
+    align-items: flex-start;
+  }
+  .dex .id {
+    flex: 0 0 28pt;
+    background: #e62429;
+    color: #ffd92e;
+    text-align: center;
+    font-weight: 900;
+    font-size: 8.5pt;
+    padding: 1pt 0;
+    margin-right: 5pt;
+    border: 1pt solid #0a0a0a;
+    font-variant-numeric: tabular-nums;
+  }
+  .dex .body { flex: 1; }
+  .dex .body .title { font-weight: 900; }
+  .dex .body .meta { font-size: 7.5pt; color: #555; text-transform: uppercase; letter-spacing: 0.04em; }
+  .dex .ko .title { color: #c81020; }
+  .dex .ko .title::after {
+    content: " KO";
+    background: #c81020;
+    color: #fff;
+    padding: 0 5pt;
+    border: 1pt solid #0a0a0a;
+    font-size: 7pt;
+    letter-spacing: 0.1em;
+    margin-left: 4pt;
+    font-weight: 900;
+  }
+
+  /* CFM */
+  .lore {
+    text-align: center;
+    padding: 4pt 8pt;
+    margin-bottom: 5pt;
+    border: 1.5pt solid #0a0a0a;
+    background: #ffd92e;
+    box-shadow: 2pt 2pt 0 #0a0a0a;
+  }
+  .lore .label { font-size: 7pt; text-transform: uppercase; letter-spacing: 0.2em; font-weight: 900; }
+  .lore .ref { font-size: 11pt; font-weight: 900; margin: 1pt 0; }
+  .lore .theme { font-style: italic; font-size: 8.5pt; font-weight: 700; }
+  .lore .today { font-size: 8.5pt; margin-top: 1pt; font-weight: 700; }
+
+  .thought-box {
+    border: 1.5pt solid #0a0a0a;
+    height: 130pt;
+    margin-bottom: 6pt;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    box-shadow: 2pt 2pt 0 #0a0a0a;
+    overflow: hidden;
+  }
+  .thought-box .label {
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    background: linear-gradient(180deg, #f85888 0%, #d63375 100%);
+    color: #fff;
+    text-align: center;
+    padding: 2pt 0;
+    margin: 0;
+    font-weight: 900;
+    border-bottom: 1.5pt solid #0a0a0a;
+  }
+  .thought-box .top-row {
+    display: flex;
+    border-bottom: 1.5pt solid #0a0a0a;
+  }
+  .thought-box .cfm-inset {
+    flex: 1;
+    text-align: center;
+    padding: 3pt 6pt;
+    background: #ffd92e;
+    border-right: 1.5pt solid #0a0a0a;
+  }
+  .thought-box .cfm-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.18em; color: #c81020; font-weight: 900; }
+  .thought-box .cfm-inset .ref { font-size: 9pt; font-weight: 900; margin-top: 1pt; }
+  .thought-box .pray-inset {
+    flex: 1;
+    text-align: center;
+    padding: 3pt 6pt;
+    background: linear-gradient(180deg, #4a9c4a 0%, #2e6b2e 100%);
+    color: #fff;
+  }
+  .thought-box .pray-inset .lbl { font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.18em; color: #ffd92e; font-weight: 900; margin-bottom: 1pt; }
+  .thought-box .pray-inset .names { font-size: 8pt; font-weight: 700; line-height: 1.3; }
+  .thought-box .pray-inset .names .n { white-space: nowrap; margin: 0 3pt; }
+  .thought-box .write-row {
+    flex: 1;
+    padding: 4pt 10pt;
+  }
+  .thought-box .sub-label {
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #c81020;
+    text-align: center;
+    font-weight: 900;
+    margin-bottom: 2pt;
+  }
+  .thought-box .lines { flex: 1; }
+
+  .professor {
+    border: 1.5pt solid #0a0a0a;
+    padding: 6pt 10pt;
+    margin-bottom: 5pt;
+    text-align: center;
+    font-size: 10pt;
+    font-weight: 700;
+    background: #1b5cb8;
+    color: #fff;
+    box-shadow: 2pt 2pt 0 #0a0a0a;
+    font-style: italic;
+  }
+  .professor .attr { display: block; font-style: normal; font-size: 8pt; margin-top: 2pt; color: #ffd92e; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; }
+
+  .tcg {
+    padding: 5pt 10pt;
+    border: 1.5pt solid #0a0a0a;
+    background: linear-gradient(180deg, #ffd92e 0%, #f8b800 100%);
+    box-shadow: 2pt 2pt 0 #0a0a0a;
+  }
+  .tcg .label { font-size: 7pt; text-transform: uppercase; letter-spacing: 0.18em; text-align: center; font-weight: 900; color: #c81020; margin-bottom: 2pt; }
+  .tcg .text { font-size: 9pt; text-align: center; font-weight: 700; }
+
+  footer {
+    margin-top: 5pt;
+    padding: 3pt 0;
+    background: #0a0a0a;
+    color: #ffd92e;
+    text-align: center;
+    font-size: 8pt;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    border: 1.5pt solid #0a0a0a;
+    box-shadow: 2pt 2pt 0 #555;
+  }
+</style>
+</head>
+<body>
+
+<div class="trainer-card">
+  <div class="pokeball"></div>
+  <div class="pre">— Trainer's Daily Pokédex —</div>
+  <div class="title">Welcome back,<br><span class="name">Trainer Avery</span></div>
+  <div class="meta">Trainer ID <span class="id">#{{ "%05d"|format(b.year_progress.day_of_year if b.year_progress else 1) }}</span> &middot; {{ b.for_date | date_long }} &middot; Region: {{ b.weather.location | upper }}</div>
+</div>
+
+<div class="stats-card">
+  <div class="row">
+    <div class="lbl">Weather</div>
+    <div class="val">{{ b.weather.current_f }}°F</div>
+    <div class="gauge hp"><div class="fill" style="width: {{ ((b.weather.current_f - b.weather.low_f) / (b.weather.high_f - b.weather.low_f + 1) * 100) | round }}%;"></div></div>
+    <div class="val" style="flex:0 0 auto;font-size:7.5pt;">
+      <span class="badge type-fire">HI {{ b.weather.high_f }}</span><span class="badge type-water">LO {{ b.weather.low_f }}</span><span class="badge type-electric">{{ b.weather.precip_chance_today }}% RAIN</span>
+    </div>
+  </div>
+  {% if b.ticker %}
+  <div class="row">
+    <div class="lbl">{{ b.ticker.symbol }} Stock</div>
+    <div class="val">${{ "%.2f"|format(b.ticker.price) }}</div>
+    <div class="gauge hp"><div class="fill" style="width: {{ [0, [100, 50 + b.ticker.pct_change_ytd * 5] | min] | max }}%;"></div></div>
+    <div class="val" style="flex:0 0 auto;font-size:7.5pt;">
+      WK <span class="{% if b.ticker.pct_change_7d >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_7d }}</span> ·
+      MO <span class="{% if b.ticker.pct_change_30d >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_30d }}</span> ·
+      YR <span class="{% if b.ticker.pct_change_ytd >= 0 %}pos{% else %}neg{% endif %}">{{ b.ticker.label_ytd }}</span>
+    </div>
+  </div>
+  {% endif %}
+  {% for c in b.countdowns %}
+  <div class="row">
+    <div class="lbl">Elite Four</div>
+    <div class="val">T-{{ c.days_until(b.for_date) }}d</div>
+    <div class="gauge hp"><div class="fill" style="width: {{ [0, 100 - (c.days_until(b.for_date) / 365 * 100)] | max }}%;"></div></div>
+    <div class="val" style="flex:0 0 auto;font-size:7.5pt;font-weight:700;text-transform:uppercase;">{{ c.label }} · {{ c.target.strftime("%b %-d") }}</div>
+  </div>
+  {% endfor %}
+  {% if b.year_progress %}
+  <div class="row">
+    <div class="lbl">Year Lv</div>
+    <div class="val">{{ b.year_progress.pct_label }}</div>
+    <div class="gauge year"><div class="fill" style="width: {{ b.year_progress.pct | round }}%;"></div></div>
+    <div class="val" style="flex:0 0 auto;font-size:7.5pt;">DAY {{ b.year_progress.day_of_year }} / {{ b.year_progress.days_in_year }}</div>
+  </div>
+  {% endif %}
+</div>
+
+{# Trainer's inner monologue: lore + roster side-by-side, notes below #}
+<div class="thought-box">
+  <div class="label">★ Trainer's Inner Monologue ★</div>
+  <div class="top-row">
+    {% if b.come_follow_me %}
+    <div class="cfm-inset">
+      <div class="lbl">★ Ancient Lore · {{ b.come_follow_me.week_label }} ★</div>
+      <div class="ref">{{ b.come_follow_me.week_reference }}</div>
+    </div>
+    {% endif %}
+    {% if b.prayer_group %}
+    <div class="pray-inset">
+      <div class="lbl">★ Today's Party Roster ★</div>
+      <div class="names">{% for n in b.prayer_group %}<span class="n">{{ n }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="write-row">
+    <div class="sub-label">★ Trainer's notes ★</div>
+    <div class="lines"></div>
+  </div>
+</div>
+
+<div class="body-grid">
+
+  <div class="col">
+    <div class="card">
+      <h2 class="sect">▶ Today's Battles ▶</h2>
+      <div class="battles">
+        {% for e in b.events %}
+        <div class="row">
+          <div class="t">{{ e.time_range | replace('am','A') | replace('pm','P') | upper }}</div>
+          <div class="body">
+            <div class="title">{{ e.title }}</div>
+            {% if e.location %}<div class="loc">@ {{ e.location }}</div>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% if b.upcoming %}
+    <div class="card" style="margin-top: 5pt;">
+      <h2 class="sect green">▶ Wild Encounters · 7 Days ▶</h2>
+      <div class="wild">
+        {% for u in b.upcoming %}
+        <div class="row">
+          <div class="w">{{ u.day_label | upper }}{% if u.time_label %} · {{ u.time_label }}{% endif %}</div>
+          <div class="body">{{ u.title }}{% if u.location %} <em style="color:#555;font-size:8pt">@ {{ u.location }}</em>{% endif %}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <h2 class="sect">▶ Trainer's Quest · Top 10 ▶</h2>
+      <div class="dex">
+        {% for t in b.tasks %}
+        <div class="row {% if t.is_past_due %}ko{% endif %}">
+          <div class="id">#{{ "%03d"|format(loop.index) }}</div>
+          <div class="body">
+            <span class="title">{{ t.title }}</span><br>
+            <span class="meta">
+              {% set t_class = ({"Ultra High":"type-fire","High":"type-electric","Medium":"type-water","Low":"type-grass"}).get(t.priority.value, "type-normal") %}
+              <span class="badge {{ t_class }}">{{ t.priority.value }}</span>
+              {% if t.project %}<span class="badge type-normal" style="color:#0a0a0a;">{{ t.project }}</span>{% endif %}
+              {% if t.due %} due {{ t.due | due }}{% endif %}
+            </span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<footer>
+  ★ Gotta Catch 'Em All · {{ b.for_date | date_short }} ★
+</footer>
+
+</body>
+</html>
