@@ -50,6 +50,23 @@ _METRIC_ALIASES: dict[str, tuple[str, ...]] = {
     "sleep": ("sleep_analysis",),
 }
 
+# How to roll multiple same-day samples into a single daily value.
+# HAE may export either pre-aggregated daily totals (one point per day)
+# or raw intraday samples (hundreds of points per day); both reduce to
+# one number per metric per day with the right operator.
+_AGG_SUM = "sum"
+_AGG_MEAN = "mean"
+_AGG_LATEST = "latest"
+
+_METRIC_AGG: dict[str, str] = {
+    "steps": _AGG_SUM,
+    "active_energy": _AGG_SUM,
+    "resting_hr": _AGG_LATEST,
+    "hrv": _AGG_MEAN,
+    "weight": _AGG_LATEST,
+    "vo2_max": _AGG_LATEST,
+}
+
 _RUN_KEYWORDS = ("run",)
 _BIKE_KEYWORDS = ("cycling", "bike", "biking")
 _SWIM_KEYWORDS = ("swim",)
@@ -68,16 +85,19 @@ def _find_metric(metrics: list[dict[str, Any]], key: str) -> dict[str, Any] | No
     return None
 
 
-def _latest_and_avg(
-    metric: dict[str, Any] | None,
-    field: str = "qty",
-) -> tuple[float | None, float | None]:
-    """Return (latest_value, 7d_average) from a HAE metric block."""
+def _daily_values(
+    metric: dict[str, Any] | None, agg: str, field: str = "qty"
+) -> list[tuple[date, float]]:
+    """Group raw points by calendar date and aggregate within each day.
+
+    HAE's raw export can have hundreds of intraday samples per metric;
+    its aggregated export has one per day. Both shapes collapse to a
+    list of (day, value) once aggregated with the right operator.
+    """
     if not metric:
-        return None, None
-    points = metric.get("data") or []
-    values: list[tuple[datetime, float]] = []
-    for p in points:
+        return []
+    by_day: dict[date, list[float]] = {}
+    for p in metric.get("data") or []:
         v = p.get(field)
         if v is None:
             continue
@@ -85,12 +105,29 @@ def _latest_and_avg(
             dt = _parse_hae_datetime(p["date"])
         except (KeyError, ValueError):
             continue
-        values.append((dt, float(v)))
-    if not values:
+        by_day.setdefault(dt.date(), []).append(float(v))
+    out: list[tuple[date, float]] = []
+    for d in sorted(by_day):
+        vs = by_day[d]
+        if agg == _AGG_SUM:
+            out.append((d, sum(vs)))
+        elif agg == _AGG_MEAN:
+            out.append((d, sum(vs) / len(vs)))
+        else:  # _AGG_LATEST: HAE points within a day already come in time order
+            out.append((d, vs[-1]))
+    return out
+
+
+def _latest_and_avg(
+    metric: dict[str, Any] | None, key: str
+) -> tuple[float | None, float | None]:
+    """Return (latest day's value, mean over last 7 days)."""
+    pairs = _daily_values(metric, _METRIC_AGG[key])
+    if not pairs:
         return None, None
-    values.sort(key=lambda x: x[0])
-    latest = values[-1][1]
-    avg = sum(v for _, v in values) / len(values)
+    latest = pairs[-1][1]
+    window = pairs[-7:]
+    avg = sum(v for _, v in window) / len(window)
     return latest, avg
 
 
@@ -114,11 +151,18 @@ def _parse_sleep(metric: dict[str, Any] | None) -> tuple[float | None, float | N
         return None, None, None
     parsed.sort(key=lambda x: x[0])
     latest = parsed[-1][1]
+    # HAE sometimes reports `asleep` and `inBed` as 0 even when the night
+    # was tracked — fall through truthy checks to totalSleep, and as a
+    # last resort sum the stage breakdown.
     total = latest.get("asleep") or latest.get("totalSleep") or latest.get("inBed")
+    if not total:
+        stages = [latest.get(k) or 0 for k in ("deep", "rem", "core")]
+        if any(stages):
+            total = sum(stages)
     deep = latest.get("deep")
     rem = latest.get("rem")
     return (
-        float(total) if total is not None else None,
+        float(total) if total else None,
         float(deep) if deep is not None else None,
         float(rem) if rem is not None else None,
     )
@@ -161,12 +205,12 @@ def parse_hae_payload(payload: dict[str, Any], received_at: datetime) -> HealthS
     metrics: list[dict[str, Any]] = data.get("metrics") or []
     workouts: list[dict[str, Any]] = data.get("workouts") or []
 
-    steps_latest, _ = _latest_and_avg(_find_metric(metrics, "steps"))
-    energy_latest, _ = _latest_and_avg(_find_metric(metrics, "active_energy"))
-    rhr_latest, rhr_avg = _latest_and_avg(_find_metric(metrics, "resting_hr"))
-    hrv_latest, hrv_avg = _latest_and_avg(_find_metric(metrics, "hrv"))
+    steps_latest, _ = _latest_and_avg(_find_metric(metrics, "steps"), "steps")
+    energy_latest, _ = _latest_and_avg(_find_metric(metrics, "active_energy"), "active_energy")
+    rhr_latest, rhr_avg = _latest_and_avg(_find_metric(metrics, "resting_hr"), "resting_hr")
+    hrv_latest, hrv_avg = _latest_and_avg(_find_metric(metrics, "hrv"), "hrv")
     weight_metric = _find_metric(metrics, "weight")
-    weight_latest, weight_avg = _latest_and_avg(weight_metric)
+    weight_latest, weight_avg = _latest_and_avg(weight_metric, "weight")
     weight_units = (weight_metric or {}).get("units", "lb").lower()
     if weight_units in ("kg", "kilogram", "kilograms"):
         weight_latest = _kg_to_lb(weight_latest)
@@ -176,7 +220,7 @@ def parse_hae_payload(payload: dict[str, Any], received_at: datetime) -> HealthS
         if weight_latest is None or weight_avg is None
         else weight_latest - weight_avg
     )
-    vo2_latest, _ = _latest_and_avg(_find_metric(metrics, "vo2_max"))
+    vo2_latest, _ = _latest_and_avg(_find_metric(metrics, "vo2_max"), "vo2_max")
     sleep_total, sleep_deep, sleep_rem = _parse_sleep(_find_metric(metrics, "sleep"))
 
     since = received_at - timedelta(days=7)
